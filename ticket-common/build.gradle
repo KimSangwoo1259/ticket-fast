@@ -1,0 +1,27 @@
+plugins {
+    id 'java-library'
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+}
+dependencies {
+    // 다른 모듈에서도 공통으로 쓸 라이브러리들
+    api 'org.springframework.boot:spring-boot-starter-validation'
+    api 'org.springframework.boot:spring-boot-starter-json'
+
+    api 'org.springframework:spring-web'
+    // WebFlux와 MVC 공통으로 쓰이는 데이터 처리를 위해 추가
+    api 'org.springframework.boot:spring-boot-starter'
+    // JPA 어노테이션 및 기능을 사용하기 위해 추가
+    api 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // JWT
+    api 'io.jsonwebtoken:jjwt-api:0.12.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
+    // TSID 생성을 위한 라이브러리
+    api 'com.github.f4b6a3:tsid-creator:5.2.6'
+}
+
+// 실행 가능한 JAR 파일을 만들지 않음 (중요!)
+bootJar { enabled = false }
+jar { enabled = true }

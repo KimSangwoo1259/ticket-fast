@@ -1,0 +1,9 @@
+dependencies {
+    implementation project(':ticket-common')
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+    // R2DBC용 MySQL 드라이버
+    implementation 'io.asyncer:r2dbc-mysql'
+    runtimeOnly 'com.mysql:mysql-connector-j'
+}

@@ -1,0 +1,26 @@
+server:
+  port: 8081
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/ticket_db?serverTimezone=Asia/Seoul&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+        default_batch_fetch_size: 100
+    open-in-view: false
+
+
+jwt:
+  secret: cr7siuucr7siuucr7siuucr7siuucr7siuucr7siuucr7siuucr7siuu
+  access-expiration: 3600000 # 1시간
+  refresh-expiration: 1209600000 # 14일

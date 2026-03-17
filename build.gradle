@@ -1,0 +1,43 @@
+plugins {
+    // 플러그인 버전만 정의하고, 루트에는 적용하지 않음 (apply false)
+    id 'org.springframework.boot' version '4.0.3' apply false
+    id 'io.spring.dependency-management' version '1.1.7' apply false
+    id 'java'
+}
+
+allprojects {
+    group = 'com.ticket.fast'
+    version = '0.0.1-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+
+        maven { url 'https://repo.spring.io/milestone' }
+    }
+}
+
+// 모든 자식 모듈(subprojects)에 공통으로 적용될 설정
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+
+    dependencies {
+        // 모든 모듈이 공통으로 사용할 라이브러리
+        compileOnly 'org.projectlombok:lombok'
+        annotationProcessor 'org.projectlombok:lombok'
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    }
+
+
+    tasks.named('test') {
+        useJUnitPlatform()
+    }
+}

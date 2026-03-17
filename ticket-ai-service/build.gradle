@@ -1,0 +1,5 @@
+dependencies {
+    implementation project(':ticket-common')
+    implementation 'org.springframework.boot:spring-boot-starter-webflux' // WebClient용
+    // Pinecone은 전용 라이브러리보다 REST API 호출이 더 깔끔할 수 있습니다.
+}

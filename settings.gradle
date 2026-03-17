@@ -1,0 +1,7 @@
+rootProject.name = 'ticket-fast'
+
+include 'ticket-common'
+include 'ticket-gateway'
+include 'ticket-member-service'
+include 'ticket-order-service'
+include 'ticket-ai-service'
