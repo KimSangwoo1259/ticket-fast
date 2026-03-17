@@ -1,6 +1,6 @@
-package com.ticket.fast.common.config;
+package com.ticket.fast.member.config;
 
-import com.ticket.fast.common.resolver.LoginUserArgumentResolver;
+import com.ticket.fast.member.resolver.LoginUserArgumentResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Configuration;
