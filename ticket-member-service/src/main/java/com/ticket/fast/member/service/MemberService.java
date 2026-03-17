@@ -72,4 +72,11 @@ public class MemberService {
         // 4. 토큰 생성 및 반환
         return jwtProvider.createToken(member.getId(), member.getEmail(), roles);
     }
+
+    public MemberResponse getMyInfo(Long userId){
+        Member member = memberRepository.findById(userId).orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+        log.info("회원 정보 조회 userId {}", userId);
+
+        return MemberResponse.fromEntity(member);
+    }
 }

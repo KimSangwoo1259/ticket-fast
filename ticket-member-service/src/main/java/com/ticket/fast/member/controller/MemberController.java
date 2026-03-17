@@ -1,5 +1,6 @@
 package com.ticket.fast.member.controller;
 
+import com.ticket.fast.common.annotation.LoginUser;
 import com.ticket.fast.common.dto.ApiResponse;
 
 import com.ticket.fast.common.dto.TokenResponse;
@@ -33,9 +34,9 @@ public class MemberController {
         return ResponseEntity.ok(ApiResponse.success(memberService.login(request)));
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<ApiResponse<?>> test(){
-        return ResponseEntity.ok(ApiResponse.success(""));
+    @GetMapping
+    public ResponseEntity<ApiResponse<MemberResponse>> getMyInfo(@LoginUser Long userId){
+        return ResponseEntity.ok(ApiResponse.success(memberService.getMyInfo(userId)));
     }
 
 }
