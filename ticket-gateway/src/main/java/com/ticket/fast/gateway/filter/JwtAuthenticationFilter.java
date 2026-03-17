@@ -1,5 +1,6 @@
 package com.ticket.fast.gateway.filter;
 
+import com.ticket.fast.common.util.AuthConstant;
 import com.ticket.fast.common.util.JwtProvider;
 import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +32,13 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
 
-            ServerHttpRequest request = exchange.getRequest();
+            ServerHttpRequest request = exchange.getRequest().mutate()
+                    .headers(httpHeaders -> {
+                        // 보안용 기존 헤더 청소
+                        httpHeaders.remove(AuthConstant.X_USER_ID);
+                        httpHeaders.remove(AuthConstant.X_USER_ROLE);
+                    })
+                    .build();
 
             //토큰 추출
             String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
@@ -49,9 +56,11 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
 
             Claims claims = jwtProvider.getClaims(token);
             String userId = claims.getSubject();
+            String role = claims.get("roles", String.class);
 
             ServerHttpRequest mutatedRequest = request.mutate()
-                    .header("X-User-Id", userId)
+                    .header(AuthConstant.X_USER_ID, userId)
+                    .header(AuthConstant.X_USER_ROLE, (role != null) ? role : "") // null 방어 코드
                     .build();
 
             log.info("Gateway 인증 통과: User ID {}", userId);
