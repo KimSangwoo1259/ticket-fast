@@ -201,4 +201,11 @@ gradle-app.setting
 # Java heap dump
 *.hprof
 
+
+# .gitignore 파일 예시
+# MySQL 데이터 폴더 제외
+mysql-data/
+data/
+db/data/
+*.sql.gz
 # End of https://www.toptal.com/developers/gitignore/api/macos,gradle,java,intellij+all,windows
