@@ -1,6 +1,7 @@
-package com.ticket.fast.common.resolver;
+package com.ticket.fast.member.resolver;
 
 import com.ticket.fast.common.annotation.LoginUser;
+import com.ticket.fast.common.util.AuthConstant;
 import jakarta.servlet.http.HttpServletRequest;
 import org.jspecify.annotations.Nullable;
 import org.springframework.core.MethodParameter;
@@ -23,7 +24,7 @@ public class LoginUserArgumentResolver implements HandlerMethodArgumentResolver 
     public @Nullable Object resolveArgument(MethodParameter parameter, @Nullable ModelAndViewContainer mavContainer, NativeWebRequest webRequest, @Nullable WebDataBinderFactory binderFactory) throws Exception {
         HttpServletRequest request = (HttpServletRequest) webRequest.getNativeRequest();
 
-        String userId = request.getHeader("X-User-ID");
+        String userId = request.getHeader(AuthConstant.X_USER_ID);
 
         if (!StringUtils.hasText(userId)){
             return null;
