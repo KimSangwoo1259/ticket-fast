@@ -11,9 +11,15 @@ public enum ErrorCode {
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "존재하지 않는 회원입니다"),
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "M002", "이미 사용 중인 이메일입니다."),
     INVALID_PASSWORD(HttpStatus.UNAUTHORIZED, "M003", "비밀번호가 일치하지 않습니다."),
+    ADMIN_ADMIRE_ACTION(HttpStatus.FORBIDDEN, "M004", "관리자만 가능합니다."),
 
     TICKET_NOT_FOUND(HttpStatus.NOT_FOUND, "T001", "티켓 정보를 찾을 수 없습니다."),
     TICKET_SOLD_OUT(HttpStatus.BAD_REQUEST, "T002", "매진된 티켓 입니다."),
+
+
+    INVALID_TIME_REQUEST(HttpStatus.BAD_REQUEST, "P001", "공연의 시작시간은 종료시간 이전이어야 합니다."),
+    SEAT_UNAVAILABLE(HttpStatus.CONFLICT, "P002", "이미 타인에게 선택된 좌석입니다."),
+    SEAT_NOT_FOUND(HttpStatus.NOT_FOUND, "P003", "해당 좌석이 존재하지 않습니다."),
     ;
 
 
