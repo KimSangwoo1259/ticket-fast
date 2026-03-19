@@ -20,6 +20,7 @@ public enum ErrorCode {
     INVALID_TIME_REQUEST(HttpStatus.BAD_REQUEST, "P001", "공연의 시작시간은 종료시간 이전이어야 합니다."),
     SEAT_UNAVAILABLE(HttpStatus.CONFLICT, "P002", "이미 타인에게 선택된 좌석입니다."),
     SEAT_NOT_FOUND(HttpStatus.NOT_FOUND, "P003", "해당 좌석이 존재하지 않습니다."),
+    PERFORMANCE_NOT_FOUND(HttpStatus.NOT_FOUND, "P004", "해당 공연이 존재하지 않습니다."),
     ;
 
 

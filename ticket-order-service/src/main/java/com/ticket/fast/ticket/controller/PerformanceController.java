@@ -3,21 +3,22 @@ package com.ticket.fast.ticket.controller;
 import com.ticket.fast.common.annotation.LoginUser;
 import com.ticket.fast.common.dto.ApiResponse;
 import com.ticket.fast.common.dto.AuthUser;
-import com.ticket.fast.common.exception.BusinessException;
-import com.ticket.fast.common.exception.ErrorCode;
-import com.ticket.fast.common.util.AuthConstant;
 import com.ticket.fast.ticket.dto.request.PerformanceCreateRequest;
+import com.ticket.fast.ticket.dto.request.PerformanceSeatCreateRequest;
 import com.ticket.fast.ticket.dto.response.PerformanceResponse;
-import com.ticket.fast.ticket.repository.PerformanceRepository;
+import com.ticket.fast.ticket.dto.response.PerformanceSeatResponse;
 import com.ticket.fast.ticket.service.PerformanceService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.time.LocalDateTime;
 
 @RequiredArgsConstructor
 @RequestMapping("/api/performance")
@@ -26,15 +27,34 @@ public class PerformanceController {
 
     private final PerformanceService performanceService;
 
+
+    //공연 생성
     @PostMapping
     public Mono<ResponseEntity<ApiResponse<PerformanceResponse>>> createPerformance(@LoginUser AuthUser authUser,
                                                                                     @RequestBody PerformanceCreateRequest request){
-        if (!"ADMIN".equals(authUser.role())){
-            throw new BusinessException(ErrorCode.ADMIN_ADMIRE_ACTION);
-        }
-
-        return performanceService.createPerformance(request)
+        return performanceService.createPerformance(authUser,request)
                 .map(response -> ResponseEntity.status(HttpStatus.CREATED)
                         .body(ApiResponse.success(response)));
     }
+
+    @GetMapping
+    public Mono<ResponseEntity<ApiResponse<Page<PerformanceResponse>>>> searchPerformances(
+            @RequestParam String title,
+            @RequestParam LocalDateTime startTime,
+            @RequestParam LocalDateTime endTime,
+            @PageableDefault(size = 10, page = 0) Pageable pageable
+    ) {
+        return performanceService.searchPerformance(title, startTime, endTime, pageable)
+                .map(response -> ResponseEntity.ok(ApiResponse.success(response)));
+    }
+
+    //공연 좌석 생성
+    @PostMapping("/seat")
+    public Flux<ResponseEntity<ApiResponse<PerformanceSeatResponse>>> createPerformanceSeats(@LoginUser AuthUser authUser,
+                                                                                             @RequestBody PerformanceSeatCreateRequest request){
+        return performanceService.createPerformanceSeats(authUser, request)
+                .map(response -> ResponseEntity.ok(ApiResponse.success(response)));
+    }
+
+
 }

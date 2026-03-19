@@ -5,13 +5,15 @@ import com.ticket.fast.common.exception.BusinessException;
 import com.ticket.fast.common.exception.ErrorCode;
 import com.ticket.fast.ticket.domain.Reservation;
 import com.ticket.fast.ticket.domain.ReservationStatus;
-import com.ticket.fast.ticket.domain.SeatStatus;
 import com.ticket.fast.ticket.dto.request.ReservationCreateRequest;
 import com.ticket.fast.ticket.dto.response.ReservationResponse;
 import com.ticket.fast.ticket.repository.PerformanceSeatRepository;
 import com.ticket.fast.ticket.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
@@ -47,5 +49,15 @@ public class ReservationService {
                 // TODO: [TIMEOUT] 좌석 선점(RESERVED) 후 일정 시간 내 결제 미완료 시 자동 취소 스케줄러 연동 필요
                 .doOnNext(reservation -> log.info("예약 저장 성공 id: {}", reservation.getId()))
                 .map(ReservationResponse::fromEntity);
+    }
+
+    public Mono<Page<ReservationResponse>> getMyReservations(AuthUser authUser, Pageable pageable){
+        return Mono.zip(
+                reservationRepository.findByUserId(authUser.userId(), pageable).map(ReservationResponse::fromEntity)
+                        .collectList(),
+                reservationRepository.countByUserId(authUser.userId()))
+                .doOnSuccess(responses -> log.info("개인 저장 내역 불러오기 성공 userId {}",authUser.userId()))
+                .doOnError(e -> log.error("예약 내역 조회중 오류 발생 userId {}, error {}",authUser.userId(),e.getMessage(),e))
+                .map(tuple -> new PageImpl<>(tuple.getT1(), pageable, tuple.getT2()));
     }
 }

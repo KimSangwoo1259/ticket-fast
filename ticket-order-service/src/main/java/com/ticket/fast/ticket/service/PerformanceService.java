@@ -1,11 +1,18 @@
 package com.ticket.fast.ticket.service;
 
+import com.ticket.fast.common.annotation.AdminOnly;
+import com.ticket.fast.common.dto.AuthUser;
 import com.ticket.fast.common.exception.BusinessException;
 import com.ticket.fast.common.exception.ErrorCode;
 import com.ticket.fast.ticket.domain.Performance;
+import com.ticket.fast.ticket.domain.PerformanceSeat;
+import com.ticket.fast.ticket.domain.SeatStatus;
 import com.ticket.fast.ticket.dto.request.PerformanceCreateRequest;
+import com.ticket.fast.ticket.dto.request.PerformanceSeatCreateRequest;
 import com.ticket.fast.ticket.dto.response.PerformanceResponse;
+import com.ticket.fast.ticket.dto.response.PerformanceSeatResponse;
 import com.ticket.fast.ticket.repository.PerformanceRepository;
+import com.ticket.fast.ticket.repository.PerformanceSeatRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -26,10 +33,12 @@ import java.time.LocalDateTime;
 @Service
 public class PerformanceService {
     private final PerformanceRepository performanceRepository;
+    private final PerformanceSeatRepository performanceSeatRepository;
 
     // 공연 생성
+    @AdminOnly
     @Transactional
-    public Mono<PerformanceResponse> createPerformance(PerformanceCreateRequest request) {
+    public Mono<PerformanceResponse> createPerformance(AuthUser authUser, PerformanceCreateRequest request) {
         return Mono.just(request)
                 // 1. 유효성 검사 (비즈니스 로직의 시작)
                 .filter(req -> !req.startTime().isAfter(req.endTime()))
@@ -52,15 +61,37 @@ public class PerformanceService {
     }
 
     // 공연 리스트 조회
-    public Mono<Page<PerformanceResponse>> searchPerformance(String title, LocalDateTime startTime, LocalDateTime endTime, Pageable pageable){
+    public Mono<Page<PerformanceResponse>> searchPerformance(String title, LocalDateTime startTime, LocalDateTime endTime, Pageable pageable) {
 
 
         return Mono.zip(
-                performanceRepository.findByTitleContainingIgnoreCaseAndStartTimeBetween(title, startTime, endTime, pageable)
-                        .map(PerformanceResponse::fromEntity).collectList(),
-                performanceRepository.countByTitleContainingIgnoreCaseAndStartTimeBetween(title, startTime, endTime)
-        ).doOnNext(a -> log.info("공연 정보 검색 title {}, startTime {} endTime {}", title, startTime, endTime))
+                        performanceRepository.findByTitleContainingIgnoreCaseAndStartTimeBetween(title, startTime, endTime, pageable)
+                                .map(PerformanceResponse::fromEntity).collectList(),
+                        performanceRepository.countByTitleContainingIgnoreCaseAndStartTimeBetween(title, startTime, endTime)
+                ).doOnNext(a -> log.info("공연 정보 검색 title {}, startTime {} endTime {}", title, startTime, endTime))
                 .map(tuple -> new PageImpl<>(tuple.getT1(), pageable, tuple.getT2()));
 
     }
+
+    @AdminOnly
+    @Transactional
+    public Flux<PerformanceSeatResponse> createPerformanceSeats(AuthUser authUser, PerformanceSeatCreateRequest request){
+        return performanceRepository.existsById(request.performanceId())
+                .filter(exist -> exist)
+                .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.PERFORMANCE_NOT_FOUND)))
+                .flatMapMany(exist -> performanceSeatRepository.saveAll(
+                        Flux.fromIterable(request.requestSeats()) // List를 Flux로 변환
+                                .map(req -> PerformanceSeat.builder()
+                                        .performanceId(request.performanceId())
+                                        .seatCode(req.seatCode())
+                                        .status(SeatStatus.AVAILABLE)
+                                        .price(req.price())
+                                        .build())
+                ))
+                .map(PerformanceSeatResponse::fromEntity)
+                .doOnComplete(() -> log.info("공연(ID:{}) 좌석 저장 완료", request.performanceId()))
+                .doOnError(e -> log.error("공연 좌석 저장 중 에러: {}", e.getMessage()));
+    }
+
+
 }
