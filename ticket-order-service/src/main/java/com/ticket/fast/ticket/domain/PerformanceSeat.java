@@ -1,9 +1,10 @@
 package com.ticket.fast.ticket.domain;
 
 import com.ticket.fast.common.util.TsidUtil;
-import jakarta.persistence.Id;
 import lombok.Builder;
 import lombok.Getter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Table("performance_seat")
@@ -15,6 +16,8 @@ public class PerformanceSeat {
     private String seatCode;
     private SeatStatus status;
     private Integer price;
+    @Version
+    private Long version;
 
     @Builder
     private PerformanceSeat(Long performanceId, String seatCode, SeatStatus status, Integer price) {

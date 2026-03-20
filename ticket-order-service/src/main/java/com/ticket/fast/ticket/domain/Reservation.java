@@ -1,26 +1,32 @@
 package com.ticket.fast.ticket.domain;
 
 import com.ticket.fast.common.util.TsidUtil;
-import jakarta.persistence.Id;
 import lombok.Builder;
 import lombok.Getter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.annotation.Version;
+import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Table("reservation")
-public class Reservation {
+public class Reservation  {
 
     @Id
-    private final Long id;
+    private Long id;
 
-    private final Long performanceId;
-    private final Long userId;
+    private Long performanceId;
+    private Long userId;
 
-    private final String seatCode;
-    private final ReservationStatus status;
-    private final LocalDateTime reservedAt;
+    private String seatCode;
+    private ReservationStatus status;
+    private LocalDateTime reservedAt;
+
+    @Version
+    private Long version;
 
     @Builder
     private Reservation(Long performanceId, Long userId, String seatCode, ReservationStatus status) {
@@ -31,4 +37,5 @@ public class Reservation {
         this.status = status;
         this.reservedAt = LocalDateTime.now();
     }
+
 }

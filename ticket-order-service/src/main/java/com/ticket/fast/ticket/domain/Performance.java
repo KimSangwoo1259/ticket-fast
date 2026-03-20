@@ -1,9 +1,9 @@
 package com.ticket.fast.ticket.domain;
 
 import com.ticket.fast.common.util.TsidUtil;
-import jakarta.persistence.Id;
 import lombok.Builder;
 import lombok.Getter;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
 
@@ -14,12 +14,12 @@ import java.time.LocalDateTime;
 public class Performance {
 
     @Id
-    private final Long id;
-    private final String title;
-    private final String description;
-    private final LocalDateTime startTime;
-    private final LocalDateTime endTime;
-    private final Integer price;
+    private Long id;
+    private String title;
+    private String description;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private Integer price;
 
     @Builder
     private Performance(String title, String description, LocalDateTime startTime, LocalDateTime endTime, Integer price){
