@@ -4,7 +4,7 @@ import com.ticket.fast.common.annotation.LoginUser;
 import com.ticket.fast.common.dto.ApiResponse;
 import com.ticket.fast.common.dto.AuthUser;
 import com.ticket.fast.ticket.dto.request.PerformanceCreateRequest;
-import com.ticket.fast.ticket.dto.request.PerformanceSeatCreateRequest;
+import com.ticket.fast.ticket.dto.request.PerformanceSeatRequest;
 import com.ticket.fast.ticket.dto.response.PerformanceResponse;
 import com.ticket.fast.ticket.dto.response.PerformanceSeatResponse;
 import com.ticket.fast.ticket.service.PerformanceService;
@@ -19,6 +19,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @RequiredArgsConstructor
 @RequestMapping("/api/performance")
@@ -37,7 +38,7 @@ public class PerformanceController {
                         .body(ApiResponse.success(response)));
     }
 
-    @GetMapping
+    @GetMapping("/search")
     public Mono<ResponseEntity<ApiResponse<Page<PerformanceResponse>>>> searchPerformances(
             @RequestParam String title,
             @RequestParam LocalDateTime startTime,
@@ -49,10 +50,12 @@ public class PerformanceController {
     }
 
     //공연 좌석 생성
-    @PostMapping("/seat")
-    public Flux<ResponseEntity<ApiResponse<PerformanceSeatResponse>>> createPerformanceSeats(@LoginUser AuthUser authUser,
-                                                                                             @RequestBody PerformanceSeatCreateRequest request){
-        return performanceService.createPerformanceSeats(authUser, request)
+    @PostMapping("/seat/{performanceId}")
+    public Mono<ResponseEntity<ApiResponse<List<PerformanceSeatResponse>>>> createPerformanceSeats(@LoginUser AuthUser authUser,
+                                                                                             @PathVariable Long performanceId,
+                                                                                             @RequestBody List<PerformanceSeatRequest> request){
+        return performanceService.createPerformanceSeats(authUser, performanceId,request)
+                .collectList()
                 .map(response -> ResponseEntity.ok(ApiResponse.success(response)));
     }
 

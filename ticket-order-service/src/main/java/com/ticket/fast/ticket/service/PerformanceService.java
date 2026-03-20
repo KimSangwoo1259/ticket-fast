@@ -8,7 +8,7 @@ import com.ticket.fast.ticket.domain.Performance;
 import com.ticket.fast.ticket.domain.PerformanceSeat;
 import com.ticket.fast.ticket.domain.SeatStatus;
 import com.ticket.fast.ticket.dto.request.PerformanceCreateRequest;
-import com.ticket.fast.ticket.dto.request.PerformanceSeatCreateRequest;
+import com.ticket.fast.ticket.dto.request.PerformanceSeatRequest;
 import com.ticket.fast.ticket.dto.response.PerformanceResponse;
 import com.ticket.fast.ticket.dto.response.PerformanceSeatResponse;
 import com.ticket.fast.ticket.repository.PerformanceRepository;
@@ -17,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +24,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 @Slf4j
@@ -75,21 +75,21 @@ public class PerformanceService {
 
     @AdminOnly
     @Transactional
-    public Flux<PerformanceSeatResponse> createPerformanceSeats(AuthUser authUser, PerformanceSeatCreateRequest request){
-        return performanceRepository.existsById(request.performanceId())
+    public Flux<PerformanceSeatResponse> createPerformanceSeats(AuthUser authUser, Long performanceId,List<PerformanceSeatRequest> requests){
+        return performanceRepository.existsById(performanceId)
                 .filter(exist -> exist)
                 .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.PERFORMANCE_NOT_FOUND)))
                 .flatMapMany(exist -> performanceSeatRepository.saveAll(
-                        Flux.fromIterable(request.requestSeats()) // List를 Flux로 변환
+                        Flux.fromIterable(requests) // List를 Flux로 변환
                                 .map(req -> PerformanceSeat.builder()
-                                        .performanceId(request.performanceId())
+                                        .performanceId(performanceId)
                                         .seatCode(req.seatCode())
                                         .status(SeatStatus.AVAILABLE)
                                         .price(req.price())
                                         .build())
                 ))
                 .map(PerformanceSeatResponse::fromEntity)
-                .doOnComplete(() -> log.info("공연(ID:{}) 좌석 저장 완료", request.performanceId()))
+                .doOnComplete(() -> log.info("공연(ID:{}) 좌석 저장 완료", performanceId))
                 .doOnError(e -> log.error("공연 좌석 저장 중 에러: {}", e.getMessage()));
     }
 

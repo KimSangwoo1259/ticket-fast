@@ -10,6 +10,10 @@ public interface PerformanceSeatRepository extends R2dbcRepository<PerformanceSe
     Mono<PerformanceSeat> findByPerformanceIdAndSeatCode(Long performanceId, String seatCode);
 
     @Modifying
-    @Query("UPDATE performance_seats SET status = 'RESERVED' WHERE id = :id AND status = 'AVAILABLE'")
+    @Query("""
+        UPDATE performance_seat 
+        SET status = 'RESERVED', version = version + 1 
+        WHERE id = :id AND status = 'AVAILABLE'
+    """)
     Mono<Integer> reserveSeat(Long id);
 }
