@@ -18,6 +18,18 @@ spring:
               filters:
                 - JwtAuthenticationFilter
 
+            - id: ticket-service-public
+              uri: http://localhost:8082
+              predicates:
+                - Path=/api/performance/search
+
+            - id: member-service-private
+              uri: http://localhost:8082
+              predicates:
+                - Path=/api/performance/**, /api/reservation/**
+              filters:
+                - JwtAuthenticationFilter
+
 
 jwt:
   secret: cr7siuucr7siuucr7siuucr7siuucr7siuucr7siuucr7siuucr7siuu

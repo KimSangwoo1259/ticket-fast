@@ -3,3 +3,14 @@ spring:
     url: r2dbc:mysql://localhost:3306/ticket_db
     username: root
     password: root
+server:
+  port: 8082
+jwt:
+  secret: cr7siuucr7siuucr7siuucr7siuucr7siuucr7siuucr7siuucr7siuu
+  access-expiration: 3600000 # 1시간
+  refresh-expiration: 1209600000 # 14일
+
+
+logging:
+  level:
+    org.springframework.data.r2dbc: DEBUG
