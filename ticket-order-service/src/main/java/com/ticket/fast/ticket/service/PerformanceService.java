@@ -11,6 +11,7 @@ import com.ticket.fast.ticket.dto.request.PerformanceCreateRequest;
 import com.ticket.fast.ticket.dto.request.PerformanceSeatRequest;
 import com.ticket.fast.ticket.dto.response.PerformanceResponse;
 import com.ticket.fast.ticket.dto.response.PerformanceSeatResponse;
+import com.ticket.fast.ticket.dto.response.PerformanceWithSeatsResponse;
 import com.ticket.fast.ticket.repository.PerformanceRepository;
 import com.ticket.fast.ticket.repository.PerformanceSeatRepository;
 import lombok.RequiredArgsConstructor;
@@ -93,11 +94,16 @@ public class PerformanceService {
                 .doOnError(e -> log.error("공연 좌석 저장 중 에러: {}", e.getMessage()));
     }
 
-    public Flux<PerformanceSeatResponse> getPerformanceSeats(Long performanceId){
-        return performanceSeatRepository.findByPerformanceId(performanceId)
-                .map(PerformanceSeatResponse::fromEntity)
-                .doOnComplete(() -> log.info("공연 좌석 조회 성공 공연 Id {}", performanceId))
-                .doOnError(e -> log.error("공연 좌석 조회중 오류 발생 error {}", e.getMessage(), e));
+    public Mono<PerformanceWithSeatsResponse> getPerformanceWithSeat(Long performanceId){
+        return Mono.zip(
+                performanceRepository.findById(performanceId)
+                        .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.PERFORMANCE_NOT_FOUND))),
+                performanceSeatRepository.findByPerformanceId(performanceId)
+                        .map(PerformanceSeatResponse::fromEntity).collectList()
+
+        ).map(tuple -> PerformanceWithSeatsResponse.fromEntity(tuple.getT1(), tuple.getT2()))
+                .doOnSuccess(r -> log.info("공연 상세 조회 성공 공연 id {}",performanceId))
+                .doOnError(e -> log.error("공연 상세 조회 중 오류 발생 {}",e.getMessage(),e));
     }
 
 
