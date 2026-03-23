@@ -93,5 +93,12 @@ public class PerformanceService {
                 .doOnError(e -> log.error("공연 좌석 저장 중 에러: {}", e.getMessage()));
     }
 
+    public Flux<PerformanceSeatResponse> getPerformanceSeats(Long performanceId){
+        return performanceSeatRepository.findByPerformanceId(performanceId)
+                .map(PerformanceSeatResponse::fromEntity)
+                .doOnComplete(() -> log.info("공연 좌석 조회 성공 공연 Id {}", performanceId))
+                .doOnError(e -> log.error("공연 좌석 조회중 오류 발생 error {}", e.getMessage(), e));
+    }
+
 
 }

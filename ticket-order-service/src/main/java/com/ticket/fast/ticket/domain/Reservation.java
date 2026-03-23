@@ -24,6 +24,7 @@ public class Reservation  {
     private String seatCode;
     private ReservationStatus status;
     private LocalDateTime reservedAt;
+    private LocalDateTime cancelledAt;
 
     @Version
     private Long version;

@@ -21,7 +21,15 @@ public enum ErrorCode {
     SEAT_UNAVAILABLE(HttpStatus.CONFLICT, "P002", "이미 타인에게 선택된 좌석입니다."),
     SEAT_NOT_FOUND(HttpStatus.NOT_FOUND, "P003", "해당 좌석이 존재하지 않습니다."),
     PERFORMANCE_NOT_FOUND(HttpStatus.NOT_FOUND, "P004", "해당 공연이 존재하지 않습니다."),
+
+
+    NOT_RESERVATION_OWNER(HttpStatus.FORBIDDEN,"R001","타인의 예약을 취소할 수 없습니다."),
+    ALREADY_CANCELLED_RESERVATION(HttpStatus.BAD_REQUEST, "R002", "이미 취소된 예매 입니다."),
+    CANCELLATION_FAILED(HttpStatus.FORBIDDEN, "R003", "예약 취소가 실패하였습니다.")
+
+
     ;
+
 
 
 

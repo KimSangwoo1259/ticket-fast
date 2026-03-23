@@ -35,4 +35,11 @@ public class ReservationController {
         return reservationService.getMyReservations(authUser, pageable)
                 .map(response -> ResponseEntity.ok(ApiResponse.success(response)));
     }
+
+    @DeleteMapping("/{reservationId}")
+    public Mono<ResponseEntity<ApiResponse<ReservationResponse>>> cancelReservation(@LoginUser AuthUser authUser,
+                                                                                    @PathVariable Long reservationId){
+        return reservationService.cancelReservation(authUser, reservationId)
+                .map(response -> ResponseEntity.ok(ApiResponse.success(response)));
+    }
 }

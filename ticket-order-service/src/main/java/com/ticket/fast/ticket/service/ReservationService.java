@@ -60,4 +60,33 @@ public class ReservationService {
                 .doOnError(e -> log.error("예약 내역 조회중 오류 발생 userId {}, error {}",authUser.userId(),e.getMessage(),e))
                 .map(tuple -> new PageImpl<>(tuple.getT1(), pageable, tuple.getT2()));
     }
+
+    //TODO 3번 db 조회가 비효율 적일 수도 있음. 비효율 적으로 판단 될 시, 실패 했을때만 조회하는 방식으로 변경
+    @Transactional
+    public Mono<ReservationResponse> cancelReservation(AuthUser authUser, Long reservationId){
+
+        return reservationRepository.findById(reservationId)
+                // 1. 권한 체크
+                .filter(r -> r.getUserId().equals(authUser.userId()))
+                .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.NOT_RESERVATION_OWNER)))
+
+                // 2. 상태 체크
+                .filter(r -> r.getStatus() != ReservationStatus.CANCELLED)
+                .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.ALREADY_CANCELLED_RESERVATION)))
+
+                // 3. 원자적 취소 실행 (결과는 Mono<Long>)
+                .flatMap(r -> reservationRepository.cancelReservation(reservationId))
+
+                // 4. 성공 여부 확인 후 데이터 재조회
+                .flatMap(count -> {
+                    if (count == 0) {
+                        // 업데이트가 안 됐다면? 그 사이에 10분이 지났거나 상태가 변한 것
+                        return Mono.error(new BusinessException(ErrorCode.CANCELLATION_FAILED));
+                    }
+                    // 성공했다면 DB에서 '진짜 최신' 데이터를 다시 가져옵니다.
+                    return reservationRepository.findById(reservationId);
+                }).map(ReservationResponse::fromEntity)
+                .doOnSuccess(r -> log.info("예약 취소 성공 예약 id{}", reservationId))
+                .doOnError(e -> log.error("예약 취소중 오류 발생 예약 id {}",reservationId));
+    }
 }
