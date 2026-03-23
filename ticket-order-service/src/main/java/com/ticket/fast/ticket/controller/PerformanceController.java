@@ -7,6 +7,7 @@ import com.ticket.fast.ticket.dto.request.PerformanceCreateRequest;
 import com.ticket.fast.ticket.dto.request.PerformanceSeatRequest;
 import com.ticket.fast.ticket.dto.response.PerformanceResponse;
 import com.ticket.fast.ticket.dto.response.PerformanceSeatResponse;
+import com.ticket.fast.ticket.dto.response.PerformanceWithSeatsResponse;
 import com.ticket.fast.ticket.service.PerformanceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -49,6 +50,12 @@ public class PerformanceController {
                 .map(response -> ResponseEntity.ok(ApiResponse.success(response)));
     }
 
+    @GetMapping("/{performanceId}")
+    public Mono<ResponseEntity<ApiResponse<PerformanceWithSeatsResponse>>> getPerformanceWithSeats(@PathVariable Long performanceId){
+        return performanceService.getPerformanceWithSeat(performanceId)
+                .map(response -> ResponseEntity.ok(ApiResponse.success(response)));
+    }
+
     //공연 좌석 생성
     @PostMapping("/seat/{performanceId}")
     public Mono<ResponseEntity<ApiResponse<List<PerformanceSeatResponse>>>> createPerformanceSeats(@LoginUser AuthUser authUser,
@@ -58,6 +65,8 @@ public class PerformanceController {
                 .collectList()
                 .map(response -> ResponseEntity.ok(ApiResponse.success(response)));
     }
+
+
 
 
 }
