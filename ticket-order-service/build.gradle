@@ -6,4 +6,5 @@ dependencies {
     // R2DBC용 MySQL 드라이버
     implementation 'io.asyncer:r2dbc-mysql'
     runtimeOnly 'com.mysql:mysql-connector-j'
+    runtimeOnly 'io.netty:netty-resolver-dns-native-macos:4.1.107.Final:osx-aarch_64'
 }

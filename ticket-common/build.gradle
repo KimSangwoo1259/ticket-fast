@@ -14,6 +14,7 @@ dependencies {
 
     // 컴파일 할때 참고하고 빌드 결과물에는 포함 X (WebFlux 사용 서비스에서 충돌 날 수도 있어서)
     compileOnly 'org.springframework.boot:spring-boot-starter-web'
+
     // JPA 어노테이션 및 기능을 사용하기 위해 추가
     api 'org.springframework.boot:spring-boot-starter-data-jpa'
 
