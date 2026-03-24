@@ -9,6 +9,7 @@ import com.ticket.fast.ticket.service.ReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +32,7 @@ public class ReservationController {
 
     @GetMapping
     public Mono<ResponseEntity<ApiResponse<Page<ReservationResponse>>>> getMyReservations(@LoginUser AuthUser authUser,
-                                                                                          Pageable pageable){
+                                                                                          @PageableDefault(size = 10, page = 0) Pageable pageable){
         return reservationService.getMyReservations(authUser, pageable)
                 .map(response -> ResponseEntity.ok(ApiResponse.success(response)));
     }
