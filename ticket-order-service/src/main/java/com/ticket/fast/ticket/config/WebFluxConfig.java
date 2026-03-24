@@ -3,6 +3,7 @@ package com.ticket.fast.ticket.config;
 import com.ticket.fast.ticket.resolver.WebFluxAuthUserResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.web.ReactivePageableHandlerMethodArgumentResolver;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
 import org.springframework.web.reactive.result.method.annotation.ArgumentResolverConfigurer;
 
@@ -13,6 +14,7 @@ public class WebFluxConfig implements WebFluxConfigurer {
 
     @Override
     public void configureArgumentResolvers(ArgumentResolverConfigurer configurer) {
+        configurer.addCustomResolver(new ReactivePageableHandlerMethodArgumentResolver()); // webFlux Pageable 용 resolver
         configurer.addCustomResolver(webFluxAuthUserResolver);
     }
 }
