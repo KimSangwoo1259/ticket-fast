@@ -21,12 +21,13 @@ spring:
             - id: ticket-service-public
               uri: http://localhost:8082
               predicates:
-                - Path=/api/performance/search
+                - Method=GET
 
-            - id: member-service-private
+
+            - id: ticket-service-private
               uri: http://localhost:8082
               predicates:
-                - Path=/api/performance/**, /api/reservation/**
+                - Path=/api/performance/**, /api/reservation/**,
               filters:
                 - JwtAuthenticationFilter
 
