@@ -51,7 +51,6 @@ public class PerformanceService {
                         .description(req.description())
                         .startTime(req.startTime())
                         .endTime(req.endTime())
-                        .price(req.price())
                         .build())
                 // 4. DB 저장 (Mono<Performance> 반환하므로 flatMap 사용)
                 .flatMap(performanceRepository::save)
@@ -62,13 +61,13 @@ public class PerformanceService {
     }
 
     // 공연 리스트 조회
-    public Mono<Page<PerformanceResponse>> searchPerformance(String title, LocalDateTime startTime, LocalDateTime endTime, Pageable pageable) {
+    public Mono<Page<PerformanceResponse>> searchPerformance(String title, String category, LocalDateTime startTime, LocalDateTime endTime, Pageable pageable) {
 
 
         return Mono.zip(
-                        performanceRepository.findByTitleContainingIgnoreCaseAndStartTimeBetween(title, startTime, endTime, pageable)
+                        performanceRepository.searchPerformanceByCondition(title, category,startTime, endTime, pageable)
                                 .map(PerformanceResponse::fromEntity).collectList(),
-                        performanceRepository.countByTitleContainingIgnoreCaseAndStartTimeBetween(title, startTime, endTime)
+                        performanceRepository.countPerformanceByCondition(title, category,startTime, endTime)
                 ).doOnNext(a -> log.info("공연 정보 검색 title {}, startTime {} endTime {}", title, startTime, endTime))
                 .map(tuple -> new PageImpl<>(tuple.getT1(), pageable, tuple.getT2()));
 

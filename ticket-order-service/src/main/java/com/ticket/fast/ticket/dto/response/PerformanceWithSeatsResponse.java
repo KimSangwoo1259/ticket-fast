@@ -11,7 +11,6 @@ public record PerformanceWithSeatsResponse(
         String description,
         LocalDateTime startTime,
         LocalDateTime endTime,
-        Integer price,
         List<PerformanceSeatResponse> seatList
 ) {
     public static PerformanceWithSeatsResponse fromEntity(Performance performance, List<PerformanceSeatResponse> seatList){
@@ -21,7 +20,6 @@ public record PerformanceWithSeatsResponse(
                 performance.getDescription(),
                 performance.getStartTime(),
                 performance.getEndTime(),
-                performance.getPrice(),
                 seatList
         );
     }

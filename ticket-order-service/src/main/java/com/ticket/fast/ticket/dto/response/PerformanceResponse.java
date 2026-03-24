@@ -9,8 +9,7 @@ public record PerformanceResponse(
         String title,
         String description,
         LocalDateTime startTime,
-        LocalDateTime endTime,
-        Integer price
+        LocalDateTime endTime
 ) {
     public static PerformanceResponse fromEntity(Performance entity){
         return new PerformanceResponse(
@@ -18,8 +17,7 @@ public record PerformanceResponse(
                 entity.getTitle(),
                 entity.getDescription(),
                 entity.getStartTime(),
-                entity.getEndTime(),
-                entity.getPrice()
+                entity.getEndTime()
         );
     }
 }

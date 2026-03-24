@@ -18,19 +18,18 @@ public class Performance  {
     private Long id;
     private String title;
     private String description;
+    private PerformanceCategory category;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private Integer price;
     @Version
     private Long version;
 
     @Builder
-    private Performance(String title, String description, LocalDateTime startTime, LocalDateTime endTime, Integer price){
+    private Performance(String title, String description, LocalDateTime startTime, LocalDateTime endTime){
         this.id = TsidUtil.nextLong();
         this.title = title;
         this.description = description;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.price = price;
     }
 }
