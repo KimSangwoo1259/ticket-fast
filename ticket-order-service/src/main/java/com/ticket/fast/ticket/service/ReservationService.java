@@ -5,8 +5,11 @@ import com.ticket.fast.common.exception.BusinessException;
 import com.ticket.fast.common.exception.ErrorCode;
 import com.ticket.fast.ticket.domain.Reservation;
 import com.ticket.fast.ticket.domain.ReservationStatus;
+import com.ticket.fast.ticket.domain.SeatStatus;
 import com.ticket.fast.ticket.dto.request.ReservationCreateRequest;
 import com.ticket.fast.ticket.dto.response.ReservationResponse;
+import com.ticket.fast.ticket.event.PerformanceEventHub;
+import com.ticket.fast.ticket.event.dto.SeatStatusEvent;
 import com.ticket.fast.ticket.repository.PerformanceSeatRepository;
 import com.ticket.fast.ticket.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
+
 @Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -25,6 +30,7 @@ import reactor.core.publisher.Mono;
 public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final PerformanceSeatRepository performanceSeatRepository;
+    private final PerformanceEventHub eventHub;
 
 
     @Transactional
@@ -44,7 +50,15 @@ public class ReservationService {
                             .performanceId(request.performanceId())
                             .seatCode(request.seatCode())
                             .status(ReservationStatus.CONFIRMED)
-                            .build());
+                            .build())
+                            .doOnSuccess(saved -> {
+                                eventHub.publish(new SeatStatusEvent(
+                                        saved.getPerformanceId(),
+                                        saved.getSeatCode(),
+                                        SeatStatus.RESERVED,
+                                        LocalDateTime.now()
+                                ));
+                            });
                 })
                 // TODO: [TIMEOUT] 좌석 선점(RESERVED) 후 일정 시간 내 결제 미완료 시 자동 취소 스케줄러 연동 필요
                 .doOnNext(reservation -> log.info("예약 저장 성공 id: {}", reservation.getId()))
