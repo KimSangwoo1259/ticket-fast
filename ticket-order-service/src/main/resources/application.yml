@@ -11,6 +11,7 @@ jwt:
   refresh-expiration: 1209600000 # 14일
 
 
-logging:
-  level:
-    org.springframework.data.r2dbc: DEBUG
+#logging:
+#  level:
+#    org.springframework.r2dbc: DEBUG    # R2DBC 트랜잭션 흐름 확인
+#    org.springframework.transaction: DEBUG # 트랜잭션 시작/종료 확인
