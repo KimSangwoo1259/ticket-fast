@@ -25,10 +25,19 @@ public class Performance  {
     private Long version;
 
     @Builder
-    private Performance(String title, String description, LocalDateTime startTime, LocalDateTime endTime){
+    private Performance(String title, String description, PerformanceCategory category, LocalDateTime startTime, LocalDateTime endTime){
         this.id = TsidUtil.nextLong();
         this.title = title;
         this.description = description;
+        this.category = category;
+        this.startTime = startTime;
+        this.endTime = endTime;
+    }
+
+    public void update(String title, String description, PerformanceCategory category, LocalDateTime startTime, LocalDateTime endTime){
+        this.title = title;
+        this.description = description;
+        this.category = category;
         this.startTime = startTime;
         this.endTime = endTime;
     }

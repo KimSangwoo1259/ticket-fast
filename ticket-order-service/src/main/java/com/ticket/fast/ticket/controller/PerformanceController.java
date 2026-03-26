@@ -5,10 +5,12 @@ import com.ticket.fast.common.dto.ApiResponse;
 import com.ticket.fast.common.dto.AuthUser;
 import com.ticket.fast.ticket.dto.request.PerformanceCreateRequest;
 import com.ticket.fast.ticket.dto.request.PerformanceSeatRequest;
+import com.ticket.fast.ticket.dto.request.PerformanceUpdateRequest;
 import com.ticket.fast.ticket.dto.response.PerformanceResponse;
 import com.ticket.fast.ticket.dto.response.PerformanceSeatResponse;
 import com.ticket.fast.ticket.dto.response.PerformanceWithSeatsResponse;
 import com.ticket.fast.ticket.service.PerformanceService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,7 +35,7 @@ public class PerformanceController {
     //공연 생성
     @PostMapping
     public Mono<ResponseEntity<ApiResponse<PerformanceResponse>>> createPerformance(@LoginUser AuthUser authUser,
-                                                                                    @RequestBody PerformanceCreateRequest request){
+                                                                                    @Valid @RequestBody PerformanceCreateRequest request){
         return performanceService.createPerformance(authUser,request)
                 .map(response -> ResponseEntity.status(HttpStatus.CREATED)
                         .body(ApiResponse.success(response)));
@@ -42,17 +44,26 @@ public class PerformanceController {
     @GetMapping("/search")
     public Mono<ResponseEntity<ApiResponse<Page<PerformanceResponse>>>> searchPerformances(
             @RequestParam String title,
+            @RequestParam String category,
             @RequestParam LocalDateTime startTime,
             @RequestParam LocalDateTime endTime,
             @PageableDefault(size = 10, page = 0) Pageable pageable
     ) {
-        return performanceService.searchPerformance(title, startTime, endTime, pageable)
+        return performanceService.searchPerformance(title,category, startTime, endTime, pageable)
                 .map(response -> ResponseEntity.ok(ApiResponse.success(response)));
     }
 
     @GetMapping("/{performanceId}")
     public Mono<ResponseEntity<ApiResponse<PerformanceWithSeatsResponse>>> getPerformanceWithSeats(@PathVariable Long performanceId){
         return performanceService.getPerformanceWithSeat(performanceId)
+                .map(response -> ResponseEntity.ok(ApiResponse.success(response)));
+    }
+
+    @PutMapping("/{performanceId}")
+    public Mono<ResponseEntity<ApiResponse<PerformanceResponse>>> updatePerformance(@PathVariable Long performanceId,
+                                                                                    @LoginUser AuthUser authUser,
+                                                                                    @Valid @RequestBody PerformanceUpdateRequest request) {
+        return performanceService.updatePerformance(performanceId, request)
                 .map(response -> ResponseEntity.ok(ApiResponse.success(response)));
     }
 

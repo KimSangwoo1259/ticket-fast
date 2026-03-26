@@ -9,6 +9,7 @@ import com.ticket.fast.ticket.domain.PerformanceSeat;
 import com.ticket.fast.ticket.domain.SeatStatus;
 import com.ticket.fast.ticket.dto.request.PerformanceCreateRequest;
 import com.ticket.fast.ticket.dto.request.PerformanceSeatRequest;
+import com.ticket.fast.ticket.dto.request.PerformanceUpdateRequest;
 import com.ticket.fast.ticket.dto.response.PerformanceResponse;
 import com.ticket.fast.ticket.dto.response.PerformanceSeatResponse;
 import com.ticket.fast.ticket.dto.response.PerformanceWithSeatsResponse;
@@ -106,4 +107,22 @@ public class PerformanceService {
     }
 
 
+    @AdminOnly
+    @Transactional
+    public Mono<PerformanceResponse> updatePerformance(Long performanceId, PerformanceUpdateRequest request) {
+        return Mono.just(request)
+                .filter(req -> !req.startTime().isAfter(req.endTime()))
+                .flatMap(req -> performanceRepository.findById(performanceId))
+                .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.PERFORMANCE_NOT_FOUND)))
+                .flatMap(performance -> {
+                    performance.update(
+                            request.title(),
+                            request.description(),
+                            request.category(),
+                            request.startTime(),
+                            request.endTime()
+                    );
+                    return performanceRepository.save(performance);
+                }).map(PerformanceResponse::fromEntity);
+    }
 }
