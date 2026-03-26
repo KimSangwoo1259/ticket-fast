@@ -23,6 +23,8 @@ public class Performance  {
     private LocalDateTime endTime;
     @Version
     private Long version;
+    private LocalDateTime createdAt;
+    private LocalDateTime deletedAt;
 
     @Builder
     private Performance(String title, String description, PerformanceCategory category, LocalDateTime startTime, LocalDateTime endTime){

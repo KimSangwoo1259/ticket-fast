@@ -38,7 +38,7 @@ public class PerformanceRepositoryCustomImpl implements PerformanceRepositoryCus
     }
 
     private static Criteria buildCriteria(String title, String category, LocalDateTime startTime, LocalDateTime endTime) {
-        Criteria criteria = Criteria.empty();
+        Criteria criteria = getCriteria();
 
         if (StringUtils.hasText(title)){
             criteria = criteria.and("title").like("%" + title + "%").ignoreCase(true);
@@ -50,5 +50,8 @@ public class PerformanceRepositoryCustomImpl implements PerformanceRepositoryCus
             criteria = criteria.and("startTime").between(startTime, endTime);
         }
         return criteria;
+    }
+    private static Criteria getCriteria(){
+        return Criteria.empty().and("deleted_at").isNull();
     }
 }
