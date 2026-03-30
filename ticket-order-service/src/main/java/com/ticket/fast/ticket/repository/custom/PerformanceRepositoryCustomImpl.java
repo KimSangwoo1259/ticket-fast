@@ -38,7 +38,7 @@ public class PerformanceRepositoryCustomImpl implements PerformanceRepositoryCus
     }
 
     private static Criteria buildCriteria(String title, String category, LocalDateTime startTime, LocalDateTime endTime) {
-        Criteria criteria = getCriteria();
+        Criteria criteria = getCriteria() ;
 
         if (StringUtils.hasText(title)){
             criteria = criteria.and("title").like("%" + title + "%").ignoreCase(true);
