@@ -13,3 +13,9 @@ services:
       - --collation-server=utf8mb4_unicode_ci
     volumes:
       - ./mysql_data:/var/lib/mysql
+  redis:
+    image: redis:7.2-alpine
+    container_name: ticket-redis
+    ports:
+      - "6379:6379"
+    restart: always
