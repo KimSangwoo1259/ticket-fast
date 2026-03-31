@@ -8,8 +8,10 @@ import com.ticket.fast.ticket.domain.ReservationStatus;
 import com.ticket.fast.ticket.domain.SeatStatus;
 import com.ticket.fast.ticket.dto.request.ReservationCreateRequest;
 import com.ticket.fast.ticket.dto.response.ReservationResponse;
+import com.ticket.fast.ticket.dto.response.ReservationWithPerformanceResponse;
 import com.ticket.fast.ticket.event.PerformanceEventHub;
 import com.ticket.fast.ticket.event.dto.SeatStatusEvent;
+import com.ticket.fast.ticket.repository.PerformanceRepository;
 import com.ticket.fast.ticket.repository.PerformanceSeatRepository;
 import com.ticket.fast.ticket.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,47 +33,52 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final PerformanceSeatRepository performanceSeatRepository;
     private final PerformanceEventHub eventHub;
+    private final PerformanceRepository performanceRepository;
 
 
     @Transactional
     public Mono<ReservationResponse> createReservation(AuthUser authUser, ReservationCreateRequest request) {
         return performanceSeatRepository.findByPerformanceIdAndSeatCode(request.performanceId(), request.seatCode())
                 .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.SEAT_NOT_FOUND)))
-                .flatMap(seat -> performanceSeatRepository.reserveSeat(seat.getId()))
-                .flatMap(updateCount -> {
-                    if (updateCount == 0) {
-                        return Mono.error(new BusinessException(ErrorCode.SEAT_UNAVAILABLE));
-                    }
+                .flatMap(seat -> performanceSeatRepository.reserveSeat(seat.getId())
+                        .flatMap(updateCount -> {
+                            if (updateCount == 0) {
+                                return Mono.error(new BusinessException(ErrorCode.SEAT_UNAVAILABLE));
+                            }
 
-                    // TODO: [PAYMENT] 현재는 결제 로직이 없으므로 바로 CONFIRMED 처리.
-                    // TODO: 추후 PENDING 상태로 생성 후 결제 완료 웹훅(Webhook) 시점에 CONFIRMED로 변경하도록 고도화 예정.
-                    return reservationRepository.save(Reservation.builder()
-                            .userId(authUser.userId())
-                            .performanceId(request.performanceId())
-                            .seatCode(request.seatCode())
-                            .status(ReservationStatus.CONFIRMED)
-                            .build())
-                            .doOnSuccess(saved -> {
-                                eventHub.publish(new SeatStatusEvent(
-                                        saved.getPerformanceId(),
-                                        saved.getSeatCode(),
-                                        SeatStatus.RESERVED,
-                                        LocalDateTime.now()
-                                ));
-                            });
-                })
+                            // TODO: [PAYMENT] 현재는 결제 로직이 없으므로 바로 CONFIRMED 처리.
+                            // TODO: 추후 PENDING 상태로 생성 후 결제 완료 웹훅(Webhook) 시점에 CONFIRMED로 변경하도록 고도화 예정.
+                            return reservationRepository.save(Reservation.builder()
+                                            .userId(authUser.userId())
+                                            .performanceId(request.performanceId())
+                                            .seatCode(request.seatCode())
+                                            .price(seat.getPrice())
+                                            .status(ReservationStatus.CONFIRMED)
+                                            .build())
+                                    .doOnSuccess(saved -> {
+                                        eventHub.publish(new SeatStatusEvent(
+                                                saved.getPerformanceId(),
+                                                saved.getSeatCode(),
+                                                SeatStatus.RESERVED,
+                                                LocalDateTime.now()
+                                        ));
+                                    });
+                        }))
                 // TODO: [TIMEOUT] 좌석 선점(RESERVED) 후 일정 시간 내 결제 미완료 시 자동 취소 스케줄러 연동 필요
                 .doOnNext(reservation -> log.info("예약 저장 성공 id: {}", reservation.getId()))
                 .map(ReservationResponse::fromEntity);
     }
 
-    public Mono<Page<ReservationResponse>> getMyReservations(AuthUser authUser, Pageable pageable){
+    public Mono<Page<ReservationWithPerformanceResponse>> getMyReservations(AuthUser authUser, Pageable pageable){
         return Mono.zip(
-                reservationRepository.findByUserId(authUser.userId(), pageable).map(ReservationResponse::fromEntity)
-                        .collectList(),
-                reservationRepository.countByUserId(authUser.userId()))
-                .doOnSuccess(responses -> log.info("개인 저장 내역 불러오기 성공 userId {}",authUser.userId()))
-                .doOnError(e -> log.error("예약 내역 조회중 오류 발생 userId {}, error {}",authUser.userId(),e.getMessage(),e))
+                        reservationRepository.findByUserId(authUser.userId(), pageable)
+                                .flatMap(reservation -> performanceRepository.findById(reservation.getPerformanceId()
+                                ).map(performance -> ReservationWithPerformanceResponse.fromEntity(performance, reservation)))
+                                .collectList(),
+                        reservationRepository.countByUserId(authUser.userId())
+                )
+                .doOnSuccess(responses -> log.info("개인 저장 내역 불러오기 성공 userId {}", authUser.userId()))
+                .doOnError(e -> log.error("예약 내역 조회중 오류 발생 userId {}, error {}", authUser.userId(), e.getMessage(), e))
                 .map(tuple -> new PageImpl<>(tuple.getT1(), pageable, tuple.getT2()));
     }
 

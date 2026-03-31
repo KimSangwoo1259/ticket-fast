@@ -22,6 +22,7 @@ public class Reservation  {
     private Long userId;
 
     private String seatCode;
+    private Integer price;
     private ReservationStatus status;
     private LocalDateTime reservedAt;
     private LocalDateTime cancelledAt;
@@ -30,11 +31,12 @@ public class Reservation  {
     private Long version;
 
     @Builder
-    private Reservation(Long performanceId, Long userId, String seatCode, ReservationStatus status) {
+    private Reservation(Long performanceId, Long userId, String seatCode,Integer price, ReservationStatus status) {
         this.id = TsidUtil.nextLong();
         this.performanceId = performanceId;
         this.userId = userId;
         this.seatCode = seatCode;
+        this.price = price;
         this.status = status;
         this.reservedAt = LocalDateTime.now();
     }

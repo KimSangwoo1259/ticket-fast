@@ -10,6 +10,7 @@ public record ReservationResponse(
         Long performanceId,
         Long userId,
         String seatCode,
+        Integer price,
         ReservationStatus status,
         LocalDateTime reservedAt
 
@@ -20,6 +21,7 @@ public record ReservationResponse(
                 entity.getPerformanceId(),
                 entity.getUserId(),
                 entity.getSeatCode(),
+                entity.getPrice(),
                 entity.getStatus(),
                 entity.getReservedAt()
         );
