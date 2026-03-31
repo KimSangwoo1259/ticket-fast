@@ -6,6 +6,7 @@ import com.ticket.fast.common.exception.BusinessException;
 import com.ticket.fast.common.exception.ErrorCode;
 import com.ticket.fast.ticket.domain.Performance;
 import com.ticket.fast.ticket.domain.PerformanceSeat;
+import com.ticket.fast.ticket.domain.ReservationStatus;
 import com.ticket.fast.ticket.domain.SeatStatus;
 import com.ticket.fast.ticket.dto.request.PerformanceCreateRequest;
 import com.ticket.fast.ticket.dto.request.PerformanceSeatRequest;
@@ -15,8 +16,10 @@ import com.ticket.fast.ticket.dto.response.PerformanceSeatResponse;
 import com.ticket.fast.ticket.dto.response.PerformanceWithSeatsResponse;
 import com.ticket.fast.ticket.repository.PerformanceRepository;
 import com.ticket.fast.ticket.repository.PerformanceSeatRepository;
+import com.ticket.fast.ticket.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -125,4 +128,6 @@ public class PerformanceService {
                     return performanceRepository.save(performance);
                 }).map(PerformanceResponse::fromEntity);
     }
+
+
 }

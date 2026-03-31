@@ -27,4 +27,8 @@ public class PerformanceSeat {
         this.status = status;
         this.price = price;
     }
+
+    public void release() {
+        this.status = SeatStatus.AVAILABLE;
+    }
 }

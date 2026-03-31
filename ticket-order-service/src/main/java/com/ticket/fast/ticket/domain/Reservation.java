@@ -24,8 +24,10 @@ public class Reservation  {
     private String seatCode;
     private Integer price;
     private ReservationStatus status;
+    private LocalDateTime createdAt;
     private LocalDateTime reservedAt;
     private LocalDateTime cancelledAt;
+    private LocalDateTime expiredAt;
 
     @Version
     private Long version;
@@ -38,7 +40,12 @@ public class Reservation  {
         this.seatCode = seatCode;
         this.price = price;
         this.status = status;
-        this.reservedAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
+    }
+
+    public void expire() {
+        this.expiredAt = LocalDateTime.now();
+        this.status = ReservationStatus.EXPIRED;
     }
 
 }

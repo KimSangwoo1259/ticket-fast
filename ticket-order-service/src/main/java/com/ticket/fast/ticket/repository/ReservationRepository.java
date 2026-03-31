@@ -1,12 +1,15 @@
 package com.ticket.fast.ticket.repository;
 
 import com.ticket.fast.ticket.domain.Reservation;
+import com.ticket.fast.ticket.domain.ReservationStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.time.LocalDateTime;
 
 public interface ReservationRepository extends R2dbcRepository<Reservation,Long> {
     Flux<Reservation> findByUserId(Long userId, Pageable pageable);
@@ -35,4 +38,5 @@ public interface ReservationRepository extends R2dbcRepository<Reservation,Long>
     @Modifying
     Mono<Long> cancelReservation(Long reservationId);
 
+    Mono<Reservation> findAllByStatusAndCreatedAtBefore(ReservationStatus status, LocalDateTime createdAtBefore);
 }

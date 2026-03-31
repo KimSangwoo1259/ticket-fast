@@ -16,6 +16,7 @@ import com.ticket.fast.ticket.repository.PerformanceSeatRepository;
 import com.ticket.fast.ticket.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -35,6 +36,9 @@ public class ReservationService {
     private final PerformanceEventHub eventHub;
     private final PerformanceRepository performanceRepository;
 
+    @Value("${reservation-expire-minute}")
+    private int RESERVATION_EXPIRE_MINUTE;
+
 
     @Transactional
     public Mono<ReservationResponse> createReservation(AuthUser authUser, ReservationCreateRequest request) {
@@ -53,7 +57,7 @@ public class ReservationService {
                                             .performanceId(request.performanceId())
                                             .seatCode(request.seatCode())
                                             .price(seat.getPrice())
-                                            .status(ReservationStatus.CONFIRMED)
+                                            .status(ReservationStatus.PENDING)
                                             .build())
                                     .doOnSuccess(saved -> {
                                         eventHub.publish(new SeatStatusEvent(
@@ -68,6 +72,8 @@ public class ReservationService {
                 .doOnNext(reservation -> log.info("예약 저장 성공 id: {}", reservation.getId()))
                 .map(ReservationResponse::fromEntity);
     }
+
+
 
     public Mono<Page<ReservationWithPerformanceResponse>> getMyReservations(AuthUser authUser, Pageable pageable){
         return Mono.zip(
@@ -109,5 +115,36 @@ public class ReservationService {
                 }).map(ReservationResponse::fromEntity)
                 .doOnSuccess(r -> log.info("예약 취소 성공 예약 id{}", reservationId))
                 .doOnError(e -> log.error("예약 취소중 오류 발생 예약 id {}",reservationId));
+    }
+
+    /**
+     * 결제 대기후 일정 시간동안 확정되지 않은 예약을 만료 시키고 좌석 원복
+     * @return
+     */
+    @Transactional
+    public Mono<Void> processExpiredReservations() {
+        LocalDateTime expirationThreshold = LocalDateTime.now().minusMinutes(RESERVATION_EXPIRE_MINUTE);
+
+        return reservationRepository.findAllByStatusAndCreatedAtBefore(
+                ReservationStatus.PENDING, expirationThreshold
+        ).flatMap(reservation -> {
+            reservation.expire();
+
+            return performanceSeatRepository.findByPerformanceIdAndSeatCode(reservation.getPerformanceId(), reservation.getSeatCode())
+                    .flatMap(seat -> {
+                        seat.release();
+                        return performanceSeatRepository.save(seat)
+                                .doOnSuccess(s -> {
+                                    eventHub.publish(new SeatStatusEvent(
+                                            reservation.getPerformanceId(),
+                                            reservation.getSeatCode(),
+                                            SeatStatus.AVAILABLE,
+                                            LocalDateTime.now()
+                                    ));
+
+                                });
+                    }).then(reservationRepository.save(reservation));
+        }).then();
+
     }
 }
