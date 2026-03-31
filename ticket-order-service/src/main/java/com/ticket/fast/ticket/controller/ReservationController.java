@@ -5,6 +5,7 @@ import com.ticket.fast.common.dto.ApiResponse;
 import com.ticket.fast.common.dto.AuthUser;
 import com.ticket.fast.ticket.dto.request.ReservationCreateRequest;
 import com.ticket.fast.ticket.dto.response.ReservationResponse;
+import com.ticket.fast.ticket.dto.response.ReservationWithPerformanceResponse;
 import com.ticket.fast.ticket.service.ReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,8 +32,8 @@ public class ReservationController {
     }
 
     @GetMapping
-    public Mono<ResponseEntity<ApiResponse<Page<ReservationResponse>>>> getMyReservations(@LoginUser AuthUser authUser,
-                                                                                          @PageableDefault(size = 10, page = 0) Pageable pageable){
+    public Mono<ResponseEntity<ApiResponse<Page<ReservationWithPerformanceResponse>>>> getMyReservations(@LoginUser AuthUser authUser,
+                                                                                                         @PageableDefault(size = 10, page = 0) Pageable pageable){
         return reservationService.getMyReservations(authUser, pageable)
                 .map(response -> ResponseEntity.ok(ApiResponse.success(response)));
     }
