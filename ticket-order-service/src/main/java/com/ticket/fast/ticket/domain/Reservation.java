@@ -48,4 +48,9 @@ public class Reservation  {
         this.status = ReservationStatus.EXPIRED;
     }
 
+    public void confirmReservation() {
+        this.status = ReservationStatus.CONFIRMED;
+        this.reservedAt = LocalDateTime.now();
+    }
+
 }

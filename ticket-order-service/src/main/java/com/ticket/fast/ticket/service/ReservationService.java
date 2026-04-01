@@ -3,14 +3,15 @@ package com.ticket.fast.ticket.service;
 import com.ticket.fast.common.dto.AuthUser;
 import com.ticket.fast.common.exception.BusinessException;
 import com.ticket.fast.common.exception.ErrorCode;
-import com.ticket.fast.ticket.domain.Reservation;
-import com.ticket.fast.ticket.domain.ReservationStatus;
-import com.ticket.fast.ticket.domain.SeatStatus;
+import com.ticket.fast.ticket.domain.*;
+import com.ticket.fast.ticket.dto.request.PaymentRequest;
 import com.ticket.fast.ticket.dto.request.ReservationCreateRequest;
+import com.ticket.fast.ticket.dto.response.PaymentResponse;
 import com.ticket.fast.ticket.dto.response.ReservationResponse;
 import com.ticket.fast.ticket.dto.response.ReservationWithPerformanceResponse;
 import com.ticket.fast.ticket.event.PerformanceEventHub;
 import com.ticket.fast.ticket.event.dto.SeatStatusEvent;
+import com.ticket.fast.ticket.repository.PaymentHistoryRepository;
 import com.ticket.fast.ticket.repository.PerformanceRepository;
 import com.ticket.fast.ticket.repository.PerformanceSeatRepository;
 import com.ticket.fast.ticket.repository.ReservationRepository;
@@ -35,6 +36,7 @@ public class ReservationService {
     private final PerformanceSeatRepository performanceSeatRepository;
     private final PerformanceEventHub eventHub;
     private final PerformanceRepository performanceRepository;
+    private final PaymentHistoryRepository paymentHistoryRepository;
 
     @Value("${reservation-expire-minute}")
     private int RESERVATION_EXPIRE_MINUTE;
@@ -73,6 +75,35 @@ public class ReservationService {
                 .map(ReservationResponse::fromEntity);
     }
 
+    @Transactional
+    public Mono<PaymentResponse> approvePayment(AuthUser authUser, PaymentRequest request){
+        // 예약 있는거 맞아? 확인-> pending 상태 아니면 다 exception
+
+        return reservationRepository.findById(request.reservationId())
+                .filter(res -> res.getStatus().equals(ReservationStatus.PENDING))
+                .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.NOT_AVAILABLE_RESERVATION)))
+                .flatMap(reservation -> {
+                    reservation.confirmReservation();
+
+                    return reservationRepository.save(reservation)
+                            .then(savePaymentHistory(reservation, request, true));
+                });
+
+    }
+
+    private Mono<PaymentResponse> savePaymentHistory(Reservation reservation, PaymentRequest request, boolean success) {
+        return Mono.just(request)
+                .flatMap(req -> {
+                    PaymentHistory paymentHistory = PaymentHistory.builder()
+                            .amount(req.amount())
+                            .reservationId(reservation.getId())
+                            .method(req.method())
+                            .status(success ? PaymentStatus.SUCCESS : PaymentStatus.FAIL)
+                            .build();
+
+                    return paymentHistoryRepository.save(paymentHistory).map(PaymentResponse::fromEntity);
+                });
+    }
 
 
     public Mono<Page<ReservationWithPerformanceResponse>> getMyReservations(AuthUser authUser, Pageable pageable){

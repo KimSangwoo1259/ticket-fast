@@ -8,9 +8,11 @@ import com.ticket.fast.ticket.domain.Performance;
 import com.ticket.fast.ticket.domain.PerformanceSeat;
 import com.ticket.fast.ticket.domain.ReservationStatus;
 import com.ticket.fast.ticket.domain.SeatStatus;
+import com.ticket.fast.ticket.dto.request.PaymentRequest;
 import com.ticket.fast.ticket.dto.request.PerformanceCreateRequest;
 import com.ticket.fast.ticket.dto.request.PerformanceSeatRequest;
 import com.ticket.fast.ticket.dto.request.PerformanceUpdateRequest;
+import com.ticket.fast.ticket.dto.response.PaymentResponse;
 import com.ticket.fast.ticket.dto.response.PerformanceResponse;
 import com.ticket.fast.ticket.dto.response.PerformanceSeatResponse;
 import com.ticket.fast.ticket.dto.response.PerformanceWithSeatsResponse;
@@ -63,6 +65,8 @@ public class PerformanceService {
                 // 6. Response DTO로 변환
                 .map(PerformanceResponse::fromEntity);
     }
+
+
 
     // 공연 리스트 조회
     public Mono<Page<PerformanceResponse>> searchPerformance(String title, String category, LocalDateTime startTime, LocalDateTime endTime, Pageable pageable) {
