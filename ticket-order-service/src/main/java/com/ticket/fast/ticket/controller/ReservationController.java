@@ -3,7 +3,9 @@ package com.ticket.fast.ticket.controller;
 import com.ticket.fast.common.annotation.LoginUser;
 import com.ticket.fast.common.dto.ApiResponse;
 import com.ticket.fast.common.dto.AuthUser;
+import com.ticket.fast.ticket.dto.request.PaymentRequest;
 import com.ticket.fast.ticket.dto.request.ReservationCreateRequest;
+import com.ticket.fast.ticket.dto.response.PaymentResponse;
 import com.ticket.fast.ticket.dto.response.ReservationResponse;
 import com.ticket.fast.ticket.dto.response.ReservationWithPerformanceResponse;
 import com.ticket.fast.ticket.service.ReservationService;
@@ -29,6 +31,13 @@ public class ReservationController {
                 response -> ResponseEntity.status(HttpStatus.CREATED)
                         .body(ApiResponse.success(response))
         );
+    }
+
+    @PostMapping("/payment")
+    public Mono<ResponseEntity<ApiResponse<PaymentResponse>>> approvePayment(@LoginUser AuthUser authUser,
+                                                                             @RequestBody PaymentRequest paymentRequest){
+        return reservationService.approvePayment(authUser, paymentRequest)
+                .map(response -> ResponseEntity.ok(ApiResponse.success(response)));
     }
 
     @GetMapping
