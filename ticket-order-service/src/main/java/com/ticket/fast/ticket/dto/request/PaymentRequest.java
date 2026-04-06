@@ -4,6 +4,5 @@ public record PaymentRequest(
         Integer amount,
         Long reservationId,
         String method
-
 ) {
 }
