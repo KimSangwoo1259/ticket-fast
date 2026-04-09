@@ -145,7 +145,7 @@ public class ReservationService {
                     return reservationRepository.findById(reservationId);
                 }).map(ReservationResponse::fromEntity)
                 .doOnSuccess(r -> log.info("예약 취소 성공 예약 id{}", reservationId))
-                .doOnError(e -> log.error("예약 취소중 오류 발생 예약 id {}",reservationId)); 
+                .doOnError(e -> log.error("예약 취소중 오류 발생 예약 id {}",reservationId));
     }
 
     /**
