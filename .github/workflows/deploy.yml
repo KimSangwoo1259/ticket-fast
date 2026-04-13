@@ -42,7 +42,7 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/ticket-order-service:latest
 
       # 3. 회원 서비스 빌드 및 푸시
-      - name: Build and push Order Service
+      - name: Build and push Member Service
         uses: docker/build-push-action@v5
         with:
           context: .

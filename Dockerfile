@@ -1,32 +1,32 @@
 # 1. 빌드 스테이지
 FROM eclipse-temurin:21-jdk-alpine AS build
-# 빌드할 때 모듈 이름을 주입받습니다 (예: ticket-gateway)
+# FROM 문 뒤에 다시 한번 선언해야 아래에서 쓸 수 있습니다
 ARG MODULE_NAME
 WORKDIR /app
 
-# Gradle 래퍼 및 설정 파일 복사
+# 기본 설정 파일들 복사
 COPY gradlew .
 COPY gradle gradle
 COPY build.gradle .
 COPY settings.gradle .
 
-# MSA 구조: 공통 모듈과 빌드 대상 모듈만 복사하여 효율화
-COPY ticket-common ticket-common
-COPY ${MODULE_NAME} ${MODULE_NAME}
+# [핵심 변경] 특정 모듈만 복사하는 대신, 전체 구조를 복사합니다.
+# 그래들이 모든 모듈 폴더를 인식할 수 있게 해줍니다.
+COPY . .
 
-# 권한 부여 및 특정 모듈만 빌드
+# 권한 부여 및 빌드
 RUN chmod +x gradlew
+# 어떤 모듈을 빌드하는지 로그에 찍어주면 나중에 보기 편합니다
+RUN echo "Building module: ${MODULE_NAME}"
 RUN ./gradlew :${MODULE_NAME}:bootJar -x test --no-daemon
 
-# 2. 실행 스테이지
+# 2. 실행 스테이지 (이하 동일)
 FROM eclipse-temurin:21-jre-alpine
 ARG MODULE_NAME
 WORKDIR /app
 
-# 빌드 스테이지에서 생성된 특정 모듈의 JAR만 가져오기
 COPY --from=build /app/${MODULE_NAME}/build/libs/*.jar app.jar
 
-# t3.small 메모리 최적화 옵션
 ENV JAVA_OPTS="-Xms512m -Xmx1024m -XX:+UseG1GC"
 EXPOSE 8080
 
