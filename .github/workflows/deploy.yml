@@ -1,13 +1,12 @@
-name: CI/CD Pipeline
+name: MSA CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ] # main 브랜치에 푸시될 때 작동
+    branches: [ "main" ] # 상우님 브랜치명이 main인지 확인!
 
 jobs:
-  build-and-deploy:
+  build-and-push:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -18,26 +17,40 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      # 1. 빌드 (JAR 파일 생성)
-      - name: Build with Gradle
-        run: ./gradlew bootJar -x test
-
-      # 2. 도커 허브 로그인
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 3. 도커 이미지 빌드 및 푸시
-      - name: Build and push Docker image
+      # 1. 게이트웨이 빌드 및 푸시
+      - name: Build and push Gateway
         uses: docker/build-push-action@v5
         with:
           context: .
+          build-args: MODULE_NAME=ticket-gateway
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/ticket-app:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/ticket-gateway:latest
 
-      # 4. AWS EC2에 원격 접속해서 배포 명령
+      # 2. 주문 서비스 빌드 및 푸시
+      - name: Build and push Order Service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          build-args: MODULE_NAME=ticket-order-service
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/ticket-order-service:latest
+
+      # 3. 회원 서비스 빌드 및 푸시
+      - name: Build and push Order Service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          build-args: MODULE_NAME=ticket-member-service
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/ticket-member-service:latest
+
+      # 3. AWS EC2 배포 명령
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -46,6 +59,6 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             cd ~/ticket-fast
-            docker compose pull ticket-app
+            docker compose pull
             docker compose up -d
-            docker image prune -f # 오래된 이미지 정리
+            docker image prune -f
