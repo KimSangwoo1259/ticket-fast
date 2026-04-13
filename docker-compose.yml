@@ -1,5 +1,21 @@
 version: '3.8'
+
 services:
+  # 1. Spring Boot
+  ticket-app:
+    image: sangwoooo/ticket-app:latest
+    container_name: ticket-app
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_R2DBC_URL=r2dbc:mysql://ticket-db:3306/ticket_db
+      - SPRING_DATA_REDIS_HOST=ticket-redis
+    depends_on:
+      - ticket-db
+      - ticket-redis
+    restart: always # 서버가 재부팅되거나 앱이 죽으면 자동으로 다시 실행되도록
+
+  # 2. MySQL
   ticket-db:
     image: mysql:8.0
     container_name: ticket-mysql
@@ -13,7 +29,14 @@ services:
       - --collation-server=utf8mb4_unicode_ci
     volumes:
       - ./mysql_data:/var/lib/mysql
-  redis:
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+    restart: always
+
+  # 3. Redis (상우님 설정 유지)
+  ticket-redis:
     image: redis:7.2-alpine
     container_name: ticket-redis
     ports:
