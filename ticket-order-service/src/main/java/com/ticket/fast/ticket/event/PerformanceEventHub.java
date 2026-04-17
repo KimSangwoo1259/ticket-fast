@@ -19,5 +19,6 @@ public class PerformanceEventHub {
     // 새로운 이벤트가 발생했을 때 (예매 성공 시 호출)
     public void publish(SeatStatusEvent event){
         seatSink.tryEmitNext(event);
+        //
     }
 }
