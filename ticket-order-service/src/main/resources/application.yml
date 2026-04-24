@@ -1,6 +1,6 @@
 spring:
   r2dbc:
-    url: r2dbc:mysql://localhost:3306/ticket_db
+    url: r2dbc:pool:mysql://3.39.123.195:3306/ticket_db
     username: root
     password: root
   data:

@@ -38,7 +38,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 500M
+          memory: 800M
     restart: always
 
   # 인프라: Redis

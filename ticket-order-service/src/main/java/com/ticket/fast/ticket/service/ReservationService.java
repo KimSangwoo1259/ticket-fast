@@ -52,8 +52,6 @@ public class ReservationService {
                                 return Mono.error(new BusinessException(ErrorCode.SEAT_UNAVAILABLE));
                             }
 
-                            // TODO: [PAYMENT] 현재는 결제 로직이 없으므로 바로 CONFIRMED 처리.
-                            // TODO: 추후 PENDING 상태로 생성 후 결제 완료 웹훅(Webhook) 시점에 CONFIRMED로 변경하도록 고도화 예정.
                             return reservationRepository.save(Reservation.builder()
                                             .userId(authUser.userId())
                                             .performanceId(request.performanceId())
@@ -70,7 +68,6 @@ public class ReservationService {
                                         ));
                                     });
                         }))
-                // TODO: [TIMEOUT] 좌석 선점(RESERVED) 후 일정 시간 내 결제 미완료 시 자동 취소 스케줄러 연동 필요
                 .doOnNext(reservation -> log.info("예약 저장 성공 id: {}", reservation.getId()))
                 .map(ReservationResponse::fromEntity);
     }
