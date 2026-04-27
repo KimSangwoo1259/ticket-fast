@@ -31,17 +31,28 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
+            ServerHttpRequest request = exchange.getRequest();
 
-            ServerHttpRequest request = exchange.getRequest().mutate()
+            // 1. [추가] k6 성능 테스트를 위한 bypass 로직
+            // 헤더에 X-TEST-MODE: true가 포함되어 있으면 인증 로직을 전체 스킵합니다.
+            String testMode = request.getHeaders().getFirst("X-TEST-MODE");
+            if ("true".equals(testMode)) {
+                log.info("Performance Test Mode 활성화: 인증 로직을 건너뜁니다. Target: {}", request.getPath());
+                // 헤더 청소(remove)를 하지 않고, k6가 보낸 X-USER-ID를 그대로 들고 다음 필터로 넘깁니다.
+                return chain.filter(exchange);
+            }
+
+            // --- 2. 기존 보안 로직 (운영 모드) ---
+            ServerHttpRequest mutatedRequest = request.mutate()
                     .headers(httpHeaders -> {
-                        // 보안용 기존 헤더 청소
+                        // 외부에서 조작해서 보낸 ID 헤더가 있다면 여기서 삭제 (보안 강화)
                         httpHeaders.remove(AuthConstant.X_USER_ID);
                         httpHeaders.remove(AuthConstant.X_USER_ROLE);
                     })
                     .build();
 
-            //토큰 추출
-            String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+            // 토큰 추출
+            String authHeader = mutatedRequest.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
             if (!StringUtils.hasText(authHeader) || !authHeader.startsWith("Bearer ")) {
                 return onError(exchange, "토큰이 없거나 형식이 올바르지 않습니다.", HttpStatus.UNAUTHORIZED);
@@ -58,14 +69,15 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             String userId = claims.getSubject();
             String role = claims.get("roles", String.class);
 
-            ServerHttpRequest mutatedRequest = request.mutate()
+            // 검증된 토큰 정보로 헤더 재설정
+            ServerHttpRequest finalRequest = mutatedRequest.mutate()
                     .header(AuthConstant.X_USER_ID, userId)
-                    .header(AuthConstant.X_USER_ROLE, (role != null) ? role : "") // null 방어 코드
+                    .header(AuthConstant.X_USER_ROLE, (role != null) ? role : "")
                     .build();
 
             log.info("Gateway 인증 통과: User ID {}", userId);
 
-            return chain.filter(exchange.mutate().request(mutatedRequest).build());
+            return chain.filter(exchange.mutate().request(finalRequest).build());
         };
     }
 
