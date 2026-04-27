@@ -44,18 +44,20 @@ public class ReservationService {
 
     @Transactional
     public Mono<ReservationResponse> createReservation(AuthUser authUser, ReservationCreateRequest request) {
-        return performanceSeatRepository.findByPerformanceIdAndSeatCode(request.performanceId(), request.seatCode())
+        // 좌석 조회
+        return performanceSeatRepository.findById(request.performanceSeatId())
                 .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.SEAT_NOT_FOUND)))
+                // 예약(update 쿼리)
                 .flatMap(seat -> performanceSeatRepository.reserveSeat(seat.getId())
                         .flatMap(updateCount -> {
+                            // update = 0 이라면 이미 선점된 좌석
                             if (updateCount == 0) {
                                 return Mono.error(new BusinessException(ErrorCode.SEAT_UNAVAILABLE));
                             }
-
                             return reservationRepository.save(Reservation.builder()
                                             .userId(authUser.userId())
-                                            .performanceId(request.performanceId())
-                                            .seatCode(request.seatCode())
+                                            .performanceId(seat.getPerformanceId())
+                                            .seatCode(seat.getSeatCode())
                                             .price(seat.getPrice())
                                             .status(ReservationStatus.PENDING)
                                             .build())
