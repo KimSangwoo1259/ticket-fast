@@ -3,6 +3,11 @@ spring:
     url: r2dbc:pool:mysql://3.39.123.195:3306/ticket_db
     username: root
     password: root
+    pool:
+      initial-size: 10
+      max-size: 20
+      max-idle-time: 30m
+      validation-query: SELECT 1
   data:
     redis:
       host: localhost
