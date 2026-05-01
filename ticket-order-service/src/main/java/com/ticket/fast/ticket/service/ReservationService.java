@@ -156,9 +156,9 @@ public class ReservationService {
     public Mono<Void> processExpiredReservations() {
         LocalDateTime expirationThreshold = LocalDateTime.now().minusMinutes(RESERVATION_EXPIRE_MINUTE);
 
-        return reservationRepository.findAllByStatusAndCreatedAtBefore(
+        return reservationRepository.findTop500ByStatusAndCreatedAtBefore(
                 ReservationStatus.PENDING, expirationThreshold
-        ).collectList()
+        ).collectList()// 조회가 완전히 끝날 때까지 대기 (데드락 방지)
                 .flatMapMany(Flux::fromIterable)
                 .flatMap(reservation -> {
                     log.info("만료 대상 발견: {}", reservation.getId());
