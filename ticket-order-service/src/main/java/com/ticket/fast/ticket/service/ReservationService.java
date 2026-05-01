@@ -23,6 +23,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -157,7 +158,8 @@ public class ReservationService {
 
         return reservationRepository.findAllByStatusAndCreatedAtBefore(
                 ReservationStatus.PENDING, expirationThreshold
-        ).doOnSubscribe(s -> log.info("DB조회 시작"))
+        ).collectList()
+                .flatMapMany(Flux::fromIterable)
                 .flatMap(reservation -> {
                     log.info("만료 대상 발견: {}", reservation.getId());
             reservation.expire();
@@ -176,7 +178,7 @@ public class ReservationService {
 
                                 });
                     }).then(reservationRepository.save(reservation));
-        }).then();
+        },10).then();
 
     }
 }
