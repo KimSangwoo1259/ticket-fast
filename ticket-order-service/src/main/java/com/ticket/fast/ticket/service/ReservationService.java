@@ -157,7 +157,9 @@ public class ReservationService {
 
         return reservationRepository.findAllByStatusAndCreatedAtBefore(
                 ReservationStatus.PENDING, expirationThreshold
-        ).flatMap(reservation -> {
+        ).doOnSubscribe(s -> log.info("DB조회 시작"))
+                .flatMap(reservation -> {
+                    log.info("만료 대상 발견: {}", reservation.getId());
             reservation.expire();
 
             return performanceSeatRepository.findByPerformanceIdAndSeatCode(reservation.getPerformanceId(), reservation.getSeatCode())
