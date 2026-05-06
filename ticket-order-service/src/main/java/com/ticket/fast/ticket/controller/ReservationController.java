@@ -8,6 +8,7 @@ import com.ticket.fast.ticket.dto.request.ReservationCreateRequest;
 import com.ticket.fast.ticket.dto.response.PaymentResponse;
 import com.ticket.fast.ticket.dto.response.ReservationResponse;
 import com.ticket.fast.ticket.dto.response.ReservationWithPerformanceResponse;
+import com.ticket.fast.ticket.service.RedisWarmUpService;
 import com.ticket.fast.ticket.service.ReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,15 +24,22 @@ import reactor.core.publisher.Mono;
 @RestController
 public class ReservationController {
     private final ReservationService reservationService;
+    private final RedisWarmUpService warmUpService;
 
     @PostMapping
     public Mono<ResponseEntity<ApiResponse<ReservationResponse>>> createReservation(@LoginUser AuthUser authUser,
                                                                                     @RequestBody ReservationCreateRequest request){
-        return reservationService.createReservation(authUser, request).map(
+        return reservationService.createReservationByRedis(authUser, request).map(
                 response -> ResponseEntity.status(HttpStatus.CREATED)
                         .body(ApiResponse.success(response))
         );
     }
+
+    @PostMapping("/warmup/{performanceId}")
+    public Mono<Void> warmUp(@PathVariable Long performanceId){
+        return warmUpService.warmUpSeats(performanceId);
+    }
+
 
     @PostMapping("/payment")
     public Mono<ResponseEntity<ApiResponse<PaymentResponse>>> approvePayment(@LoginUser AuthUser authUser,

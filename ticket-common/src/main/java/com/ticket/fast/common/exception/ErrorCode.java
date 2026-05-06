@@ -27,7 +27,7 @@ public enum ErrorCode {
     ALREADY_CANCELLED_RESERVATION(HttpStatus.BAD_REQUEST, "R002", "이미 취소된 예매 입니다."),
     CANCELLATION_FAILED(HttpStatus.FORBIDDEN, "R003", "예약 취소가 실패하였습니다."),
     NOT_AVAILABLE_RESERVATION(HttpStatus.CONFLICT, "R004", "결제 가능한 예약이 아닙니다." ),
-
+    RESERVATION_NOT_SAVED(HttpStatus.INTERNAL_SERVER_ERROR, "R005", "예약중 오류 발생하여 좌석이 복구되었습니다."),
 
     ;
 

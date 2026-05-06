@@ -15,12 +15,14 @@ import com.ticket.fast.ticket.repository.PaymentHistoryRepository;
 import com.ticket.fast.ticket.repository.PerformanceRepository;
 import com.ticket.fast.ticket.repository.PerformanceSeatRepository;
 import com.ticket.fast.ticket.repository.ReservationRepository;
+import com.ticket.fast.ticket.util.TicketUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
@@ -38,6 +40,7 @@ public class ReservationService {
     private final PerformanceEventHub eventHub;
     private final PerformanceRepository performanceRepository;
     private final PaymentHistoryRepository paymentHistoryRepository;
+    private final ReactiveRedisTemplate<String, String> redisTemplate;
 
     @Value("${reservation-expire-minute}")
     private int RESERVATION_EXPIRE_MINUTE;
@@ -73,6 +76,38 @@ public class ReservationService {
                         }))
                 .doOnNext(reservation -> log.info("예약 저장 성공 id: {}", reservation.getId()))
                 .map(ReservationResponse::fromEntity);
+    }
+
+    @Transactional
+    public Mono<ReservationResponse> createReservationByRedis(AuthUser authUser, ReservationCreateRequest request){
+        String key = TicketUtil.createPerformanceRedisKey(request.performanceId());
+        return redisTemplate.opsForSet().remove(key, request.performanceSeatId())
+                .flatMap(removedCount -> {
+                    if (removedCount == 1) {
+                        return saveReservationToDb(authUser, request);
+                    }
+
+                    return Mono.error(new BusinessException(ErrorCode.NOT_AVAILABLE_RESERVATION));
+                }).onErrorResume(
+                        e -> {
+                            if (e instanceof BusinessException) return Mono.error(e);
+
+                            return redisTemplate.opsForSet().add(key, String.valueOf(request.performanceSeatId()))
+                                    .then(Mono.error(new BusinessException(ErrorCode.RESERVATION_NOT_SAVED)));
+                        }
+                );
+    }
+
+    private Mono<ReservationResponse> saveReservationToDb(AuthUser authUser, ReservationCreateRequest request){
+        return performanceSeatRepository.findById(request.performanceSeatId())
+                .flatMap(seat -> reservationRepository.save(
+                        Reservation.builder()
+                                .userId(authUser.userId())
+                                .price(seat.getPrice())
+                                .seatCode(seat.getSeatCode())
+                                .status(ReservationStatus.PENDING)
+                                .build()
+                )).map(ReservationResponse::fromEntity);
     }
 
     @Transactional
