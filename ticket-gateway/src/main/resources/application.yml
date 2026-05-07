@@ -9,7 +9,7 @@ spring:
             - id: memer-service-public
               uri: http://localhost:8081
               predicates:
-                - Path=/api/member/login, /api/member/join
+                - Path=/api/member/login, /api/member
 
             - id: member-service-private
               uri: http://localhost:8081
