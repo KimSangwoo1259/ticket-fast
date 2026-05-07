@@ -2,7 +2,7 @@ name: MSA CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ] # 상우님 브랜치명이 main인지 확인!
+    branches: [ "main" ]
 
 jobs:
   build-and-push:
@@ -50,7 +50,20 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/ticket-member-service:latest
 
+
+
       # 3. AWS EC2 배포 명령
+      - name: Copy docker-compose.yml to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_KEY }}
+          source: "docker-compose.yml" # 로컬의 이 파일을
+          target: "~/ticket-fast/"    # 서버의 이 위치로!
+
+
+
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -63,11 +76,3 @@ jobs:
             sudo docker compose up -d
             sudo docker image prune -f
 
-      - name: Copy docker-compose.yml to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_KEY }}
-          source: "docker-compose.yml" # 로컬의 이 파일을
-          target: "~/ticket-fast/"    # 서버의 이 위치로!
