@@ -22,6 +22,7 @@ public class MemberController {
 
     private final MemberService memberService;
 
+    //
     @PostMapping
     public ResponseEntity<ApiResponse<MemberResponse>> joinMember(@Valid @RequestBody MemberJoinRequest request){
         return ResponseEntity
