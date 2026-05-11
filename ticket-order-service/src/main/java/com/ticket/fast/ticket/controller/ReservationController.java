@@ -24,7 +24,6 @@ import reactor.core.publisher.Mono;
 @RestController
 public class ReservationController {
     private final ReservationService reservationService;
-    private final RedisWarmUpService warmUpService;
 
     @PostMapping
     public Mono<ResponseEntity<ApiResponse<ReservationResponse>>> createReservation(@LoginUser AuthUser authUser,
@@ -35,10 +34,6 @@ public class ReservationController {
         );
     }
 
-    @PostMapping("/warmup/{performanceId}")
-    public Mono<Void> warmUp(@PathVariable Long performanceId){
-        return warmUpService.warmUpSeats(performanceId);
-    }
 
 
     @PostMapping("/payment")

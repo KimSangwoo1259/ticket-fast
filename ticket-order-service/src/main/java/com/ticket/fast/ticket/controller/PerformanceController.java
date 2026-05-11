@@ -10,6 +10,7 @@ import com.ticket.fast.ticket.dto.response.PerformanceResponse;
 import com.ticket.fast.ticket.dto.response.PerformanceSeatResponse;
 import com.ticket.fast.ticket.dto.response.PerformanceWithSeatsResponse;
 import com.ticket.fast.ticket.service.PerformanceService;
+import com.ticket.fast.ticket.service.RedisWarmUpService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,7 +30,7 @@ import java.util.List;
 public class PerformanceController {
 
     private final PerformanceService performanceService;
-
+    private final RedisWarmUpService warmUpService;
 
     //공연 생성
     @PostMapping
@@ -74,6 +75,12 @@ public class PerformanceController {
         return performanceService.createPerformanceSeats(authUser, performanceId,request)
                 .collectList()
                 .map(response -> ResponseEntity.ok(ApiResponse.success(response)));
+    }
+
+
+    @PostMapping("/warmup/{performanceId}")
+    public Mono<Void> warmUp(@PathVariable Long performanceId){
+        return warmUpService.warmUpSeats(performanceId);
     }
 
 

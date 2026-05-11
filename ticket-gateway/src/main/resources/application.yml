@@ -6,7 +6,7 @@ spring:
       server:
         webflux:
           routes:
-            - id: memer-service-public
+            - id: member-service-public
               uri: http://ticket-member-service:8081
               predicates:
                 - Path=/api/member/login, /api/member
