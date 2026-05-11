@@ -103,6 +103,7 @@ public class ReservationService {
         return performanceSeatRepository.findById(request.performanceSeatId())
                 .flatMap(seat -> reservationRepository.save(
                         Reservation.builder()
+                                .performanceId(seat.getPerformanceId())
                                 .userId(authUser.userId())
                                 .price(seat.getPrice())
                                 .seatCode(seat.getSeatCode())
