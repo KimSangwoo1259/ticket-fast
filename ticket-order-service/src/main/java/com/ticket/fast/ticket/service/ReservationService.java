@@ -92,6 +92,7 @@ public class ReservationService {
                         e -> {
                             if (e instanceof BusinessException) return Mono.error(e);
 
+                            log.error("예약중 에러 발생 e {}",e.getMessage(),e);
                             return redisTemplate.opsForSet().add(key, String.valueOf(request.performanceSeatId()))
                                     .then(Mono.error(new BusinessException(ErrorCode.RESERVATION_NOT_SAVED)));
                         }
