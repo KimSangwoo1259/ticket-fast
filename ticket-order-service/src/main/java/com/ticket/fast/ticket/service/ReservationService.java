@@ -81,7 +81,7 @@ public class ReservationService {
     @Transactional
     public Mono<ReservationResponse> createReservationByRedis(AuthUser authUser, ReservationCreateRequest request){
         String key = TicketUtil.createPerformanceRedisKey(request.performanceId());
-        return redisTemplate.opsForSet().remove(key, request.performanceSeatId())
+        return redisTemplate.opsForSet().remove(key, String.valueOf(request.performanceSeatId()))
                 .flatMap(removedCount -> {
                     if (removedCount == 1) {
                         return saveReservationToDb(authUser, request);
