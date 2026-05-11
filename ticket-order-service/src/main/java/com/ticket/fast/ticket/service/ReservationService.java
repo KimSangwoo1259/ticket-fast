@@ -33,7 +33,6 @@ import java.time.LocalDateTime;
 
 @Slf4j
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 @Service
 public class ReservationService {
     private final ReservationRepository reservationRepository;
