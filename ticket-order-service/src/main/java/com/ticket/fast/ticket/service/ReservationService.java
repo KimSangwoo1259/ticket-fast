@@ -25,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -41,6 +42,7 @@ public class ReservationService {
     private final PerformanceRepository performanceRepository;
     private final PaymentHistoryRepository paymentHistoryRepository;
     private final ReactiveRedisTemplate<String, String> redisTemplate;
+    private final TransactionalOperator transactionalOperator;
 
     @Value("${reservation-expire-minute}")
     private int RESERVATION_EXPIRE_MINUTE;
@@ -78,13 +80,12 @@ public class ReservationService {
                 .map(ReservationResponse::fromEntity);
     }
 
-    @Transactional
     public Mono<ReservationResponse> createReservationByRedis(AuthUser authUser, ReservationCreateRequest request){
         String key = TicketUtil.createPerformanceRedisKey(request.performanceId());
         return redisTemplate.opsForSet().remove(key, String.valueOf(request.performanceSeatId()))
                 .flatMap(removedCount -> {
                     if (removedCount == 1) {
-                        return saveReservationToDb(authUser, request);
+                        return saveReservationToDb(authUser, request).as(transactionalOperator::transactional);
                     }
 
                     return Mono.error(new BusinessException(ErrorCode.NOT_AVAILABLE_RESERVATION));
