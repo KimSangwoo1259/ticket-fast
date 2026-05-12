@@ -2,6 +2,8 @@ package com.ticket.fast.ticket.dto.response;
 
 import com.ticket.fast.ticket.domain.Reservation;
 import com.ticket.fast.ticket.domain.ReservationStatus;
+import com.ticket.fast.ticket.dto.SeatInfo;
+import com.ticket.fast.ticket.dto.request.ReservationCreateRequest;
 
 import java.time.LocalDateTime;
 
@@ -24,6 +26,17 @@ public record ReservationResponse(
                 entity.getPrice(),
                 entity.getStatus(),
                 entity.getReservedAt()
+        );
+    }
+    public static ReservationResponse pending(Long userId, ReservationCreateRequest request, SeatInfo seatInfo) {
+        return new ReservationResponse(
+                null,
+                request.performanceId(),
+                userId,
+                seatInfo.seatCode(),
+                seatInfo.price(),
+                ReservationStatus.PENDING,
+                LocalDateTime.now()
         );
     }
 }

@@ -4,6 +4,8 @@ import com.ticket.fast.common.dto.AuthUser;
 import com.ticket.fast.common.exception.BusinessException;
 import com.ticket.fast.common.exception.ErrorCode;
 import com.ticket.fast.ticket.domain.*;
+import com.ticket.fast.ticket.dto.ReservationEvent;
+import com.ticket.fast.ticket.dto.SeatInfo;
 import com.ticket.fast.ticket.dto.request.PaymentRequest;
 import com.ticket.fast.ticket.dto.request.ReservationCreateRequest;
 import com.ticket.fast.ticket.dto.response.PaymentResponse;
@@ -23,11 +25,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
 
@@ -42,6 +46,8 @@ public class ReservationService {
     private final PaymentHistoryRepository paymentHistoryRepository;
     private final ReactiveRedisTemplate<String, String> redisTemplate;
     private final TransactionalOperator transactionalOperator;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
     @Value("${reservation-expire-minute}")
     private int RESERVATION_EXPIRE_MINUTE;
@@ -80,11 +86,28 @@ public class ReservationService {
     }
 
     public Mono<ReservationResponse> createReservationByRedis(AuthUser authUser, ReservationCreateRequest request){
-        String key = TicketUtil.createPerformanceRedisKey(request.performanceId());
-        return redisTemplate.opsForSet().remove(key, String.valueOf(request.performanceSeatId()))
+        String seatSetKey = TicketUtil.createPerformanceRedisKey(request.performanceId());
+        String seatDetailKey = TicketUtil.createDetailKey(seatSetKey);
+        String seatId = String.valueOf(request.performanceSeatId());
+
+        return redisTemplate.opsForSet().remove(seatSetKey, seatId)
                 .flatMap(removedCount -> {
                     if (removedCount == 1) {
-                        return saveReservationToDb(authUser, request).as(transactionalOperator::transactional);
+                        return redisTemplate.opsForHash().get(seatDetailKey, seatId)
+                                .map(json -> objectMapper.readValue(json.toString(), SeatInfo.class))
+                                .flatMap(info -> {
+                                    ReservationEvent event = new ReservationEvent(
+                                            authUser.userId(),
+                                            request.performanceId(),
+                                            request.performanceSeatId(),
+                                            info.seatCode(),
+                                            info.price()
+                                    );
+
+                                    return Mono.fromFuture(kafkaTemplate.send("ticketing-topic", event))
+                                            .thenReturn(ReservationResponse.pending(authUser.userId(), request, info));
+                                });
+
                     }
 
                     return Mono.error(new BusinessException(ErrorCode.NOT_AVAILABLE_RESERVATION));
@@ -93,7 +116,7 @@ public class ReservationService {
                             if (e instanceof BusinessException) return Mono.error(e);
 
                             log.error("예약중 에러 발생 e {}",e.getMessage(),e);
-                            return redisTemplate.opsForSet().add(key, String.valueOf(request.performanceSeatId()))
+                            return redisTemplate.opsForSet().add(seatSetKey, String.valueOf(request.performanceSeatId()))
                                     .then(Mono.error(new BusinessException(ErrorCode.RESERVATION_NOT_SAVED)));
                         }
                 );

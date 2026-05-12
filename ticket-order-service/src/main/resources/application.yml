@@ -12,6 +12,16 @@ spring:
     redis:
       host: localhost
       port: 6379
+  kafka:
+    bootstrap-servers: pkc-gq2xn.asia-northeast3.gcp.confluent.cloud:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    security:
+      protocol: SASL_SSL
+    properties:
+      sasl.mechanism: PLAIN
+      sasl.jaas.config: 'org.apache.kafka.common.security.plain.PlainLoginModule required username="STPOK3ZQPT3IUBKW" password="cflt8GGp4tclzIjSBS0F56g4nSqZeiHJPMQiU8vMTHaMIt9wCSIiRDzsXIJECViA";'
 server:
   port: 8082
 jwt:
