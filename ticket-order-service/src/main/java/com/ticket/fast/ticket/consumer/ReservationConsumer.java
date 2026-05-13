@@ -23,7 +23,7 @@ public class ReservationConsumer {
     public void consume(List<ReservationEvent> events){
         log.info("수신된 예약 이벤트 개수: {}",events.size());
 
-
+//
         List<Reservation> reservations = events.stream()
                 .map(event -> Reservation.builder()
                         .userId(event.userId())
