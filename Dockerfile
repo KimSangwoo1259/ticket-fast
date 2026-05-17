@@ -27,7 +27,11 @@ WORKDIR /app
 
 COPY --from=build /app/${MODULE_NAME}/build/libs/*.jar app.jar
 
-ENV JAVA_OPTS="-Xms1024m -Xmx1024m -XX:+UseG1GC"
+# [추가] OS 타임존 설정
+ENV TZ=Asia/Seoul
+
+# [수정] JVM 타임존 옵션 추가 (-Duser.timezone=Asia/Seoul)
+ENV JAVA_OPTS="-Xms1024m -Xmx1024m -XX:+UseG1GC -Duser.timezone=Asia/Seoul"
 EXPOSE 8080
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
