@@ -8,7 +8,6 @@ import com.ticket.fast.ticket.dto.request.ReservationCreateRequest;
 import com.ticket.fast.ticket.dto.response.PaymentResponse;
 import com.ticket.fast.ticket.dto.response.ReservationResponse;
 import com.ticket.fast.ticket.dto.response.ReservationWithPerformanceResponse;
-import com.ticket.fast.ticket.service.RedisWarmUpService;
 import com.ticket.fast.ticket.service.ReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,6 +28,15 @@ public class ReservationController {
     public Mono<ResponseEntity<ApiResponse<ReservationResponse>>> createReservation(@LoginUser AuthUser authUser,
                                                                                     @RequestBody ReservationCreateRequest request){
         return reservationService.createReservationByRedis(authUser, request).map(
+                response -> ResponseEntity.status(HttpStatus.CREATED)
+                        .body(ApiResponse.success(response))
+        );
+    }
+
+    @PostMapping("/v2")
+    public Mono<ResponseEntity<ApiResponse<ReservationResponse>>> createReservationByKafka(@LoginUser AuthUser authUser,
+                                                                                    @RequestBody ReservationCreateRequest request){
+        return reservationService.createReservationByRedisAndKafka(authUser, request).map(
                 response -> ResponseEntity.status(HttpStatus.CREATED)
                         .body(ApiResponse.success(response))
         );

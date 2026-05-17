@@ -86,6 +86,26 @@ public class ReservationService {
     }
 
     public Mono<ReservationResponse> createReservationByRedis(AuthUser authUser, ReservationCreateRequest request){
+        String key = TicketUtil.createPerformanceRedisKey(request.performanceId());
+        return redisTemplate.opsForSet().remove(key, String.valueOf(request.performanceSeatId()))
+                .flatMap(removedCount -> {
+                    if (removedCount == 1) {
+                        return saveReservationToDb(authUser, request).as(transactionalOperator::transactional);
+                    }
+
+                    return Mono.error(new BusinessException(ErrorCode.NOT_AVAILABLE_RESERVATION));
+                }).onErrorResume(
+                        e -> {
+                            if (e instanceof BusinessException) return Mono.error(e);
+
+                            log.error("예약중 에러 발생 e {}",e.getMessage(),e);
+                            return redisTemplate.opsForSet().add(key, String.valueOf(request.performanceSeatId()))
+                                    .then(Mono.error(new BusinessException(ErrorCode.RESERVATION_NOT_SAVED)));
+                        }
+                );
+    }
+
+    public Mono<ReservationResponse> createReservationByRedisAndKafka(AuthUser authUser, ReservationCreateRequest request){
         String seatSetKey = TicketUtil.createPerformanceRedisKey(request.performanceId());
         String seatDetailKey = TicketUtil.createDetailKey(seatSetKey);
         String seatId = String.valueOf(request.performanceSeatId());

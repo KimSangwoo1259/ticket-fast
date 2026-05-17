@@ -19,7 +19,7 @@ public class ReservationConsumer {
     private final ReservationRepository reservationRepository;
     private final PerformanceSeatRepository performanceSeatRepository;
 
-    //todo
+
     @KafkaListener(topics = "ticketing-topic", groupId = "ticket-group")
     public void consume(List<ReservationEvent> events){
         log.info("수신된 예약 이벤트 개수: {}",events.size());
