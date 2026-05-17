@@ -27,7 +27,7 @@ WORKDIR /app
 
 COPY --from=build /app/${MODULE_NAME}/build/libs/*.jar app.jar
 
-ENV JAVA_OPTS="-Xms512m -Xmx1024m -XX:+UseG1GC"
+ENV JAVA_OPTS="-Xms1024m -Xmx1024m -XX:+UseG1GC"
 EXPOSE 8080
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
