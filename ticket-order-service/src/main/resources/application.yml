@@ -22,6 +22,17 @@ spring:
     properties:
       sasl.mechanism: PLAIN
       sasl.jaas.config: 'org.apache.kafka.common.security.plain.PlainLoginModule required username="STPOK3ZQPT3IUBKW" password="cflt8GGp4tclzIjSBS0F56g4nSqZeiHJPMQiU8vMTHaMIt9wCSIiRDzsXIJECViA";'
+
+    consumer:
+      max-poll-records: 100
+      properties:
+        # 메시지가 적을 때 최대 1초까지만 기다렸다가 배치를 실행
+        fetch.max.wait.ms: 1000
+        # 메시지가 1MB 쌓이면 시간 안 돼도 바로 실행
+        fetch.min.bytes: 1048576
+
+    listener:
+      type: batch
 server:
   port: 8082
 jwt:
