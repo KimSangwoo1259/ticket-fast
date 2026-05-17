@@ -142,17 +142,24 @@ public class ReservationService {
                 );
     }
 
+
+
     private Mono<ReservationResponse> saveReservationToDb(AuthUser authUser, ReservationCreateRequest request){
         return performanceSeatRepository.findById(request.performanceSeatId())
-                .flatMap(seat -> reservationRepository.save(
-                        Reservation.builder()
-                                .performanceId(seat.getPerformanceId())
-                                .userId(authUser.userId())
-                                .price(seat.getPrice())
-                                .seatCode(seat.getSeatCode())
-                                .status(ReservationStatus.PENDING)
-                                .build()
-                )).map(ReservationResponse::fromEntity);
+                .flatMap(seat -> performanceSeatRepository.reserveSeat(seat.getId()).flatMap(updatedRows -> {
+                            if (updatedRows == 0) {
+                                return Mono.error(new BusinessException(ErrorCode.NOT_AVAILABLE_RESERVATION));
+                            }
+                            return reservationRepository.save(
+                                    Reservation.builder()
+                                            .performanceId(seat.getPerformanceId())
+                                            .userId(authUser.userId())
+                                            .price(seat.getPrice())
+                                            .seatCode(seat.getSeatCode())
+                                            .status(ReservationStatus.PENDING)
+                                            .build());
+                        }
+                ).map(ReservationResponse::fromEntity));
     }
 
     @Transactional
