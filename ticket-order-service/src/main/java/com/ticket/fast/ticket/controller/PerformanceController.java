@@ -83,6 +83,11 @@ public class PerformanceController {
         return warmUpService.warmUpSeats(performanceId);
     }
 
+    @PostMapping("/warmup/batch")
+    public Mono<Void> warmup(@RequestBody List<Long> performanceIds){
+        return warmUpService.warmUpBatch(performanceIds);
+    }
+
 
 
 
