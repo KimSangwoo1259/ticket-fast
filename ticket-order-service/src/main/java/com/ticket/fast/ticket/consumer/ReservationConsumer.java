@@ -35,7 +35,7 @@ public class ReservationConsumer {
                         .build())
                 .toList();
 
-        // 2. 좌석 상태 변경과 예약 저장을 '비동기'로 처리
+
         reservationRepository.saveAll(reservations)
                 .thenMany(Flux.fromIterable(events))
                 .flatMap(event -> performanceSeatRepository.reserveSeat(event.performanceSeatId()))
