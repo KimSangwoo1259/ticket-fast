@@ -255,6 +255,19 @@ public class ReservationService {
                     .flatMap(seat -> {
                         seat.release();
                         return performanceSeatRepository.save(seat)
+                                .flatMap(savedSeat -> {
+                                    String seatSetKey = TicketUtil.createPerformanceRedisKey(reservation.getPerformanceId());
+                                    String seatDetailKey = TicketUtil.createDetailKey(seatSetKey);
+                                    String seatId = String.valueOf(savedSeat.getId());
+
+                                    SeatInfo info = new SeatInfo(savedSeat.getSeatCode(), savedSeat.getPrice());
+                                    return Mono.fromCallable(() -> objectMapper.writeValueAsString(info))
+                                            .flatMap(json -> Mono.zip(
+                                                    redisTemplate.opsForSet().add(seatSetKey, seatId),
+                                                    redisTemplate.opsForHash().put(seatDetailKey, seatId, json)
+                                            ));
+
+                                })
                                 .doOnSuccess(s -> {
                                     eventHub.publish(new SeatStatusEvent(
                                             reservation.getPerformanceId(),
