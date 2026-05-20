@@ -1,5 +1,25 @@
+
+ext {
+    set('springAiVersion', "2.0.0-M6")
+}
+
+
 dependencies {
     implementation project(':ticket-common')
-    implementation 'org.springframework.boot:spring-boot-starter-webflux' // WebClient용
-    // Pinecone은 전용 라이브러리보다 REST API 호출이 더 깔끔할 수 있습니다.
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.ai:spring-ai-advisors-vector-store'
+    implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
+    implementation 'org.springframework.ai:spring-ai-starter-vector-store-qdrant'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webflux-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
 }
