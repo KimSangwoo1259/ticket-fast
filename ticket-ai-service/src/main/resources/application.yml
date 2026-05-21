@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: ticket-ai-service
+
+  ai:
+    google:
+      genai:
+        api-key: ${GEMINI_API_KEY}
+
+
+        chat:
+          model: gemini-1.5-flash
+
+        embedding:
+          text:
+            options:
+              model: text-embedding-004
