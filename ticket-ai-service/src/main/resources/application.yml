@@ -6,12 +6,20 @@ spring:
     google:
       genai:
         api-key: ${GEMINI_API_KEY}
-
-
         chat:
-          model: gemini-1.5-flash
-
+          options:
+            model: gemini-2.0-flash
         embedding:
           text:
             options:
               model: text-embedding-004
+          api-key: ${GEMINI_API_KEY}
+
+
+
+
+    vectorstore:
+      qdrant:
+        host: localhost
+        port: 6334
+        collection-name: ticket-performances
