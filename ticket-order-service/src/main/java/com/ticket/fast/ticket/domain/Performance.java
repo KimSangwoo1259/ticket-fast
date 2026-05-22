@@ -18,6 +18,7 @@ public class Performance  {
     private Long id;
     private String title;
     private String description;
+    private String venue;
     private PerformanceCategory category;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
@@ -27,10 +28,11 @@ public class Performance  {
     private LocalDateTime deletedAt;
 
     @Builder
-    private Performance(String title, String description, PerformanceCategory category, LocalDateTime startTime, LocalDateTime endTime){
+    private Performance(String title, String description, String venue, PerformanceCategory category, LocalDateTime startTime, LocalDateTime endTime){
         this.id = TsidUtil.nextLong();
         this.title = title;
         this.description = description;
+        this.venue = venue;
         this.category = category;
         this.startTime = startTime;
         this.endTime = endTime;

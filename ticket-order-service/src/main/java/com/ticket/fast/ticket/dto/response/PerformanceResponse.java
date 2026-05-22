@@ -9,6 +9,7 @@ public record PerformanceResponse(
         Long id,
         String title,
         String description,
+        String venue,
         PerformanceCategory category,
         LocalDateTime startTime,
         LocalDateTime endTime
@@ -18,6 +19,7 @@ public record PerformanceResponse(
                 entity.getId(),
                 entity.getTitle(),
                 entity.getDescription(),
+                entity.getVenue(),
                 entity.getCategory(),
                 entity.getStartTime(),
                 entity.getEndTime()

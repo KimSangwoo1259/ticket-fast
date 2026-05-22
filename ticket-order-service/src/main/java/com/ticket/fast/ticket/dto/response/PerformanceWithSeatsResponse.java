@@ -9,6 +9,7 @@ public record PerformanceWithSeatsResponse(
         Long id,
         String title,
         String description,
+        String venue,
         LocalDateTime startTime,
         LocalDateTime endTime,
         List<PerformanceSeatResponse> seatList
@@ -18,6 +19,7 @@ public record PerformanceWithSeatsResponse(
                 performance.getId(),
                 performance.getTitle(),
                 performance.getDescription(),
+                performance.getVenue(),
                 performance.getStartTime(),
                 performance.getEndTime(),
                 seatList

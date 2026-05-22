@@ -10,6 +10,7 @@ public record PerformanceCreateRequest(
         @NotBlank(message = "제목을 입력해 주세요.")
         String title,
         String description,
+        String venue,
         LocalDateTime startTime,
         LocalDateTime endTime
 ) {
