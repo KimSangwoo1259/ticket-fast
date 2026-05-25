@@ -23,7 +23,7 @@ spring:
 
     vectorstore:
       qdrant:
-        host: localhost
+        host: qdrant-ai-db
         port: 6334
         collection-name: ticket-performances
 server:

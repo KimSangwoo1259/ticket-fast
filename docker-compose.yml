@@ -6,38 +6,70 @@ services:
     image: sangwoooo/ticket-gateway:latest
     container_name: ticket-gateway
     ports:
-      - "8080:8080" # 외부에서 오는 8080을 게이트웨이가 처리
+      - "8080:8080"
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 300M
     depends_on:
       - ticket-db
       - ticket-redis
 
-  # 서비스: 주문 관리
+  # 서비스: 주문 관리 (WebFlux + R2DBC + Redis)
   ticket-order-service:
     image: sangwoooo/ticket-order-service:latest
     container_name: ticket-order-service
     environment:
-      - SPRING_R2DBC_URL=r2dbc:mysql://ticket-db:3306/ticket_db
+      - SPRING_R2DBC_URL=r2dbc:mysql://ticket-mysql:3306/ticket_db
       - SPRING_DATA_REDIS_HOST=ticket-redis
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 400M
     depends_on:
       - ticket-db
       - ticket-redis
 
-  # 서비스: 회원 관리
+  # 서비스: 회원 관리 (MVC + JDBC)
   ticket-member-service:
     image: sangwoooo/ticket-member-service:latest
     container_name: ticket-member-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://ticket-db:3306/ticket_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
-
+      - SPRING_DATASOURCE_URL=jdbc:mysql://ticket-mysql:3306/ticket_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
-
       - SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 400M
     depends_on:
       - ticket-db
+
+  # 서비스: AI 및 벡터 데이터 처리 (WebFlux + Qdrant)
+  ticket-ai-service:
+    image: sangwoooo/ticket-ai-service:latest
+    container_name: ticket-ai-service
+    environment:
+      - SPRING_R2DBC_URL=r2dbc:mysql://ticket-mysql:3306/ticket_db
+      - SPRING_DATA_REDIS_HOST=ticket-redis
+      # 💡 호스트 주소를 로컬 IP 대신 도커 컨테이너 이름으로 변경하여 커넥션 타임아웃 완벽 차단!
+      - SPRING_AI_VECTORSTORE_QDRANT_HOST=qdrant-ai-db
+      - SPRING_AI_VECTORSTORE_QDRANT_PORT=6334
+      - SPRING_AI_GOOGLE_GENAI_API_KEY=${GEMINI_API_KEY}
+      - SPRING_AI_GOOGLE_GENAI_EMBEDDING_API_KEY=${GEMINI_API_KEY}
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 450M
+    depends_on:
+      - ticket-db
+      - ticket-redis
+      - qdrant
 
   # 인프라: MySQL
   ticket-db:
@@ -50,11 +82,11 @@ services:
       MYSQL_DATABASE: ticket_db
     volumes:
       - ./mysql_data:/var/lib/mysql
+    restart: always
     deploy:
       resources:
         limits:
-          memory: 800M
-    restart: always
+          memory: 600M
 
   # 인프라: Redis
   ticket-redis:
@@ -63,30 +95,22 @@ services:
     ports:
       - "6379:6379"
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 100M
 
-  ticket-ai-service:
-    image: sangwoooo/ticket-ai-service:latest
-    container_name: ticket-ai-service
-    environment:
-      - SPRING_R2DBC_URL=r2dbc:mysql://ticket-db:3306/ticket_db
-      - SPRING_DATA_REDIS_HOST=ticket-redis
-      - SPRING_AI_VECTORSTORE_QDRANT_HOST=192.168.25.35
-      - SPRING_AI_VECTORSTORE_QDRANT_PORT=6334
-
-      - SPRING_AI_GOOGLE_GENAI_API_KEY=${GEMINI_API_KEY}
-      - SPRING_AI_GOOGLE_GENAI_EMBEDDING_API_KEY=${GEMINI_API_KEY}
+  # 인프라: Qdrant Vector DB
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant-ai-db
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - ./qdrant_data:/qdrant/storage
     restart: always
-    depends_on:
-      - ticket-db
-      - ticket-redis
-
-  # vector DB
-#  qdrant:
-#    image: qdrant/qdrant:latest
-#    container_name: qdrant-ai-db
-#    profiles:
-#      - local
-#    ports:
-#      - "6333:6333"
-#    volumes:
-#      - ./qdrant_data:/qdrant.storage
+    deploy:
+      resources:
+        limits:
+          memory: 300M
