@@ -43,10 +43,10 @@ public class PerformanceController {
 
     @GetMapping("/search")
     public Mono<ResponseEntity<ApiResponse<Page<PerformanceResponse>>>> searchPerformances(
-            @RequestParam String title,
-            @RequestParam String category,
-            @RequestParam LocalDateTime startTime,
-            @RequestParam LocalDateTime endTime,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) LocalDateTime startTime,
+            @RequestParam(required = false) LocalDateTime endTime,
             @PageableDefault(size = 10, page = 0) Pageable pageable
     ) {
         return performanceService.searchPerformance(title,category, startTime, endTime, pageable)
