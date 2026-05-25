@@ -32,6 +32,14 @@ spring:
                 - JwtAuthenticationFilter
 
 
+            - id: ai-service-private
+              uri: http://ticekt-ai-service:8083
+              predicates:
+                - Path=/ai/**
+              filters:
+                - JwtAuthenticationFilter
+
+
 jwt:
   secret: cr7siuucr7siuucr7siuucr7siuucr7siuucr7siuucr7siuucr7siuu
   access-expiration: 3600000 # 1시간

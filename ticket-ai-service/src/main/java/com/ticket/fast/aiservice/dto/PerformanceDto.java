@@ -6,6 +6,7 @@ public record PerformanceDto(
         Long id,
         String title,
         String description,
+        String venue,
         String category,
         LocalDateTime startTime,
         LocalDateTime endTime

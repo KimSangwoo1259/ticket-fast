@@ -6,13 +6,14 @@ import lombok.Getter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.relational.core.mapping.Table;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 
 import java.time.LocalDateTime;
 
 @Getter
 @Table("performance")
-public class Performance  {
+public class Performance {
 
     @Id
     private Long id;
@@ -27,8 +28,9 @@ public class Performance  {
     private LocalDateTime createdAt;
     private LocalDateTime deletedAt;
 
+
     @Builder
-    private Performance(String title, String description, String venue, PerformanceCategory category, LocalDateTime startTime, LocalDateTime endTime){
+    private Performance(String title, String description, String venue, PerformanceCategory category, LocalDateTime startTime, LocalDateTime endTime) {
         this.id = TsidUtil.nextLong();
         this.title = title;
         this.description = description;
@@ -39,7 +41,7 @@ public class Performance  {
         this.createdAt = LocalDateTime.now();
     }
 
-    public void update(String title, String description, PerformanceCategory category, LocalDateTime startTime, LocalDateTime endTime){
+    public void update(String title, String description, PerformanceCategory category, LocalDateTime startTime, LocalDateTime endTime) {
         this.title = title;
         this.description = description;
         this.category = category;

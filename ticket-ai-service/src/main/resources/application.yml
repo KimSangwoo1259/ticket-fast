@@ -1,3 +1,5 @@
+
+
 spring:
   application:
     name: ticket-ai-service
@@ -23,3 +25,5 @@ spring:
         host: localhost
         port: 6334
         collection-name: ticket-performances
+server:
+  port: 8083

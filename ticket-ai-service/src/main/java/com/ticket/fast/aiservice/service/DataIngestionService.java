@@ -1,0 +1,61 @@
+package com.ticket.fast.aiservice.service;
+
+import com.ticket.fast.aiservice.dto.PerformanceDto;
+import lombok.RequiredArgsConstructor;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@RequiredArgsConstructor
+@Service
+public class DataIngestionService {
+    private final VectorStore vectorStore;
+
+
+    public Mono<Void> ingestPerformances(List<PerformanceDto> performanceList){
+        if (CollectionUtils.isEmpty(performanceList)){
+            return Mono.empty();
+        }
+
+        return Flux.fromIterable(performanceList)
+                .map(performance -> {
+                    String content = String.format("공연 정보 안내 \n 공연명: %s\n 카테고리: %s \n 공연 장소: %s \n 공연 설명: %s\n 시작일시: %s\n 종료일시: %s",
+                            performance.title(), performance.category(), performance.venue(),
+                            performance.description(), performance.startTime(), performance.endTime());
+
+                    Map<String, Object> metadata = new HashMap<>();
+
+                    // 나중에 유사도 검색 결과로 나온 ID를 통해 DB(R2DBC/Redis)에서 매핑해 올 식별자
+                    if (performance.id() != null) {
+                        metadata.put("performance_id", performance.id());
+                    }
+
+                    // "뮤지컬 중에서만 검색", "콘서트 중에서만 검색" 등 카테고리 필터링용 (Enum인 경우 .name() 처리)
+                    if (performance.category() != null) {
+                        metadata.put("category", performance.category());
+
+                    }
+
+                    // "상암 월드컵경기장 공연만 필터링" 등 특정 핫플레이스나 장소 기반 필터링용
+                    if (performance.venue() != null) {
+                        metadata.put("venue", performance.venue());
+                    }
+
+                    return new Document(content, metadata);
+                })
+                .buffer(100)
+                .flatMap(batchDocuments ->
+                        Mono.fromRunnable(() -> vectorStore.accept(batchDocuments))
+                                .subscribeOn(Schedulers.boundedElastic()))
+                .then();
+    }
+
+}

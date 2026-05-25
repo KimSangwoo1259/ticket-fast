@@ -64,14 +64,29 @@ services:
       - "6379:6379"
     restart: always
 
+  ai-service:
+    image: sangwoooo/ticket-ai-service:latest
+    container_name: ticket-ai-service
+    environment:
+      - SPRING_R2DBC_URL=r2dbc:mysql://ticket-db:3306/ticket_db
+      - SPRING_DATA_REDIS_HOST=ticket-redis
+      - SPRING_AI_VECTORSTORE_QDRANT_HOST=192.168.0.116
+      - SPRING_AI_VECTORSTORE_QDRANT_PORT=6334
+
+
+      - SPRING_AI_GEMINI_API_KEY=${GEMINI_API_KEY}
+    restart: always
+    depends_on:
+      - ticket-db
+      - ticket-redis
 
   # vector DB
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: qdrant-ai-db
-    profiles:
-      - local
-    ports:
-      - "6333:6333"
-    volumes:
-      - ./qdrant_data:/qdrant.storage
+#  qdrant:
+#    image: qdrant/qdrant:latest
+#    container_name: qdrant-ai-db
+#    profiles:
+#      - local
+#    ports:
+#      - "6333:6333"
+#    volumes:
+#      - ./qdrant_data:/qdrant.storage

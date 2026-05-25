@@ -50,6 +50,15 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/ticket-member-service:latest
 
+      # 4. AI 서비스 빌드 및 푸시
+      - name: Build and push AI Service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          build-args: MODULE_NAME=ticket-ai-service
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/ticket-ai-service:latest
+
 
 
       # 3. AWS EC2 배포 명령
