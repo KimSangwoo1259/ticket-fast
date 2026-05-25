@@ -64,7 +64,7 @@ services:
       - "6379:6379"
     restart: always
 
-  ai-service:
+  ticket-ai-service:
     image: sangwoooo/ticket-ai-service:latest
     container_name: ticket-ai-service
     environment:
