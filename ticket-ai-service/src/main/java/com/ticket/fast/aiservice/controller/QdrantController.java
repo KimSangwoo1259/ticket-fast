@@ -23,7 +23,7 @@ public class QdrantController {
 
     @AdminOnly
     @PostMapping("/admin/ingest")
-    public Mono<ResponseEntity<ApiResponse<Void>>> ingestPerformanceData(@RequestBody List<PerformanceDto> performanceList){
+    public Mono<ResponseEntity<ApiResponse<String>>> ingestPerformanceData(@RequestBody List<PerformanceDto> performanceList){
         return dataIngestionService.ingestPerformances(performanceList)
                 .map(response -> ResponseEntity.ok(ApiResponse.success(response)));
     }
