@@ -33,7 +33,7 @@ spring:
 
 
             - id: ai-service-private
-              uri: http://ticekt-ai-service:8083
+              uri: http://ticket-ai-service:8083
               predicates:
                 - Path=/ai/**
               filters:
