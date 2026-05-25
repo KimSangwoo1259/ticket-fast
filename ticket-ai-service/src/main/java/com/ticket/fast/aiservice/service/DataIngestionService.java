@@ -10,6 +10,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,12 +21,12 @@ public class DataIngestionService {
     private final VectorStore vectorStore;
 
 
-    public Mono<Void> ingestPerformances(List<PerformanceDto> performanceList){
-        if (CollectionUtils.isEmpty(performanceList)){
+    public Mono<String> ingestPerformances(List<PerformanceDto> performanceList) {
+        if (CollectionUtils.isEmpty(performanceList)) {
             return Mono.empty();
         }
 
-        return Flux.fromIterable(performanceList)
+         Flux.fromIterable(performanceList)
                 .map(performance -> {
                     String content = String.format("공연 정보 안내 \n 공연명: %s\n 카테고리: %s \n 공연 장소: %s \n 공연 설명: %s\n 시작일시: %s\n 종료일시: %s",
                             performance.title(), performance.category(), performance.venue(),
@@ -51,11 +52,19 @@ public class DataIngestionService {
 
                     return new Document(content, metadata);
                 })
-                .buffer(100)
+                .buffer(5)
+                .delayElements(Duration.ofSeconds(5))
                 .flatMap(batchDocuments ->
                         Mono.fromRunnable(() -> vectorStore.accept(batchDocuments))
-                                .subscribeOn(Schedulers.boundedElastic()))
-                .then();
-    }
+                                .subscribeOn(Schedulers.boundedElastic()), 1)
+                // 🚨 핵심: .subscribe()를 붙여서 이 무거운 흐름을 메인 스레드와 분리해 백그라운드로 던집니다!
+                .subscribe(
+                        null,
+                        error -> System.err.println("❌ 백그라운드 주입 중 에러 발생: " + error.getMessage()),
+                        () -> System.out.println("✅ 169개 전체 데이터 벡터 DB 안착 완료! 🎉")
+                );
 
+        // 💡 작업은 백그라운드에서 돌기 시작했고, 유저에게는 게이트웨이가 지치기 전에 0.1초 만에 응답을 줍니다.
+        return Mono.just("총 " + performanceList.size() + "개의 공연 데이터 주입을 백그라운드에서 시작했습니다. 로그를 확인하세요!");
+    }
 }
