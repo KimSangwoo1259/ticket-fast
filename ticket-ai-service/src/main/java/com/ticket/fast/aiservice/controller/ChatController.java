@@ -1,7 +1,9 @@
 package com.ticket.fast.aiservice.controller;
 
 import com.ticket.fast.aiservice.service.ChatService;
+import com.ticket.fast.common.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -16,7 +18,8 @@ public class ChatController {
     private final ChatService chatService;
 
     @GetMapping
-    public Mono<String> chat(@RequestParam String message){
-        return chatService.chatWithContext(message);
+    public Mono<ResponseEntity<ApiResponse<String>>> chat(@RequestParam String message){
+        return chatService.chatWithContext(message).map(response -> ResponseEntity.ok(ApiResponse.success(response)));
     }
+
 }
