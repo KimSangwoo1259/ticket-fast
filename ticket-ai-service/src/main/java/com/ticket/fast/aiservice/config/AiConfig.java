@@ -26,12 +26,19 @@ public class AiConfig {
 
     @Bean
     public ChatClient chatClient(ChatClient.Builder builder, VectorStore vectorStore){
-        String systemCommand = "너는 티켓패스트(TicketFast)의 친절하고 전문적인 AI 예매 도우미야. 제공된 공연 정보를 바탕으로 유저에게 딱 맞는 공연을 추천해줘. 정보가 없으면 모른다고 솔직하게 대답해.";
+        String systemCommand = """
+                너는 ticket-fast 서비스를 대표하는 친절하고 똑똑한 공연 추천 인공지능 상담원이야.
+                    오직 아래 제공된 [공연 정보 컨텍스트]만을 바탕으로 유저의 질문에 답변해 줘.
+                    만약 제공된 정보에 유저가 찾는 공연이 없거나 답을 알 수 없다면, 말을 지어내지 말고 
+                    "죄송합니다, 관련된 공연 정보를 찾을 수 없습니다."라고 정중하게 답변해 줘.
+                """;
 
         return builder
                 .defaultSystem(systemCommand)
                 .defaultAdvisors(QuestionAnswerAdvisor.builder(vectorStore)
-                        .searchRequest(SearchRequest.builder().topK(3).build())
+                        .searchRequest(SearchRequest.builder().topK(3)
+                                .similarityThreshold(0.7)
+                                .build())
                         .build(),
                         MessageChatMemoryAdvisor.builder(chatMemory()).build())
                 .build();
