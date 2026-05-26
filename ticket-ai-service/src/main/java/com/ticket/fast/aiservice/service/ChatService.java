@@ -2,6 +2,7 @@ package com.ticket.fast.aiservice.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
@@ -18,11 +19,12 @@ public class ChatService {
     private final ChatClient chatClient;
 
 
+    public Mono<String> chatWithContext(String userMessage, String sessionId) {
 
-    public Mono<String> chatWithContext(String userMessage){
         return Mono.fromCallable(() ->
                 chatClient.prompt()
                         .user(userMessage)
+                        .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, sessionId))
                         .call()
                         .content()
         );

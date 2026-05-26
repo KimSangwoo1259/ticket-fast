@@ -18,8 +18,9 @@ public class ChatController {
     private final ChatService chatService;
 
     @GetMapping
-    public Mono<ResponseEntity<ApiResponse<String>>> chat(@RequestParam String message){
-        return chatService.chatWithContext(message).map(response -> ResponseEntity.ok(ApiResponse.success(response)));
+    public Mono<ResponseEntity<ApiResponse<String>>> chat(@RequestParam String message,
+                                                          @RequestParam String sessionId){
+        return chatService.chatWithContext(message,sessionId).map(response -> ResponseEntity.ok(ApiResponse.success(response)));
     }
 
 }
