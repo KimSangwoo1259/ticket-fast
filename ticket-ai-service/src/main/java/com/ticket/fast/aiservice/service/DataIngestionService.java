@@ -26,6 +26,7 @@ public class DataIngestionService {
             return Mono.empty();
         }
 
+        //
          Flux.fromIterable(performanceList)
                 .map(performance -> {
                     String content = String.format("공연 정보 안내 \n 공연 ID: %s \n공연명: %s\n 카테고리: %s \n 공연 장소: %s \n 공연 설명: %s\n 시작일시: %s\n 종료일시: %s",
