@@ -21,6 +21,7 @@ spring:
             - id: ticket-service-public
               uri: http://ticket-order-service:8082
               predicates:
+                - Path=/api/performance/**
                 - Method=GET
 
 
