@@ -33,16 +33,14 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
 
-            // 1. [추가] k6 성능 테스트를 위한 bypass 로직
-            // 헤더에 X-TEST-MODE: true가 포함되어 있으면 인증 로직을 전체 스킵합니다.
+            //  k6 성능 테스트 위함. 헤더에 X-TEST-MODE: true가 포함되어 있으면 인증 로직을 전체 스킵
             String testMode = request.getHeaders().getFirst("X-TEST-MODE");
             if ("true".equals(testMode)) {
                 log.info("Performance Test Mode 활성화: 인증 로직을 건너뜁니다. Target: {}", request.getPath());
-                // 헤더 청소(remove)를 하지 않고, k6가 보낸 X-USER-ID를 그대로 들고 다음 필터로 넘깁니다.
+                // 헤더 청소(remove)를 하지 않고, k6가 보낸 X-USER-ID를 그대로 들고 다음 필터로 넘기기
                 return chain.filter(exchange);
             }
 
-            // --- 2. 기존 보안 로직 (운영 모드) ---
             ServerHttpRequest mutatedRequest = request.mutate()
                     .headers(httpHeaders -> {
                         // 외부에서 조작해서 보낸 ID 헤더가 있다면 여기서 삭제 (보안 강화)
@@ -82,6 +80,7 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
     }
 
     private Mono<Void> onError(ServerWebExchange exchange, String err, HttpStatus httpStatus){
+
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(httpStatus);
         log.error(err);

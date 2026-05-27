@@ -13,7 +13,6 @@ spring:
           text:
             options:
               model: gemini-embedding-001
-
               # Qdrant 벡터 DB와의 호환성을 위해 768차원으로 출력하라고 구글에 지시
               dimensions: 768
           api-key: ${GEMINI_API_KEY}

@@ -14,7 +14,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-@RequestMapping("/ai")
+@RequestMapping("/api/ai")
 @RequiredArgsConstructor
 @RestController
 public class QdrantController {

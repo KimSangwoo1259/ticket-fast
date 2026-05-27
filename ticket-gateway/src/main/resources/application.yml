@@ -36,7 +36,7 @@ spring:
             - id: ai-service-private
               uri: http://ticket-ai-service:8083
               predicates:
-                - Path=/ai/**
+                - Path=/api/ai/**
               filters:
                 - JwtAuthenticationFilter
 
