@@ -23,9 +23,9 @@
  (Spring MVC / Tomcat) (WebFlux / Netty)     (WebFlux / Netty)
         │                      │                      │
         ▼                      ├──────────────────┐   ▼
- ┌──────────────┐              ▼                  ▼ ┌──────────────┐
+ ┌──────────────┐              ▼                  ▼  ┌──────────────┐
  │   MySQL DB   │       ┌──────────────┐   ┌────────┐│ Qdrant DB    │
- │ (User, ACID) │       │  Redis Cache │   │ Kafka  ││ (Vector Store)│
+ │ (User, ACID) │       │  Redis Cache │   │ Kafka  ││(Vector Store)│
  └──────────────┘       │(Seat Layout/ │   │ (Batch │└──────────────┘
                         │ Gatekeeper)  │   │ Insert)│
                         └──────────────┘   └────────┘
@@ -38,7 +38,7 @@
 
 ### Backend Frameworks & Core
 
-* **Spring Boot 3.x**
+* **Spring Boot 4.0.3**
 * **Spring Cloud Gateway** (Reactive 기반 라우팅 및 보안 수문장)
 * **Spring WebFlux** (High-Performance 비동기 논블로킹 엔진)
 * **Spring AI** (Gemini 클라이언트 연동 및 RAG 오케스트레이션)
