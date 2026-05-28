@@ -9,7 +9,7 @@ import reactor.core.publisher.Sinks;
 public class PerformanceEventHub {
     // 여러 구독자에게 이벤트를 동시에 뿌려주는 통로 (가장 최근의 10개 이벤트 캐싱)
     private final Sinks.Many<SeatStatusEvent> seatSink =
-            Sinks.many().multicast().onBackpressureBuffer(10);
+            Sinks.many().multicast().onBackpressureBuffer(1024);
 
     // 이벤트를 밖으로 쏴줄 때 (Flux로 변환)
     public Flux<SeatStatusEvent> subscribe() {
@@ -18,7 +18,8 @@ public class PerformanceEventHub {
 
     // 새로운 이벤트가 발생했을 때 (예매 성공 시 호출)
     public void publish(SeatStatusEvent event){
-        seatSink.tryEmitNext(event);
-        ///
+        seatSink.emitNext(event,(singleType, emitResult)
+                // 실패 사유가 동시성 이유라면 재시도 하도록
+                ->emitResult == Sinks.EmitResult.FAIL_NON_SERIALIZED);
     }
 }

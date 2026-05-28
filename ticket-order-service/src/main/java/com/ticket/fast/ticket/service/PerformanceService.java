@@ -46,6 +46,7 @@ public class PerformanceService {
                 .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.INVALID_TIME_REQUEST)))
                 .map(req -> Performance.builder()
                         .title(req.title())
+                        .venue(req.venue())
                         .description(req.description())
                         .startTime(req.startTime())
                         .endTime(req.endTime())
@@ -59,8 +60,6 @@ public class PerformanceService {
 
     // 공연 리스트 조회
     public Mono<Page<PerformanceResponse>> searchPerformance(String title, String category, LocalDateTime startTime, LocalDateTime endTime, Pageable pageable) {
-
-
         return Mono.zip(
                         performanceRepository.searchPerformanceByCondition(title, category,startTime, endTime, pageable)
                                 .map(PerformanceResponse::fromEntity).collectList(),
@@ -119,7 +118,10 @@ public class PerformanceService {
                             request.endTime()
                     );
                     return performanceRepository.save(performance);
-                }).map(PerformanceResponse::fromEntity);
+                })
+                .doOnSuccess(r -> log.info("공연 id {} 정보 변경 성공 ",performanceId))
+                .doOnError(e -> log.error("공연 정보 변경중 오류 발생 id {}",performanceId))
+                .map(PerformanceResponse::fromEntity);
     }
 
 

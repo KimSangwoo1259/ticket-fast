@@ -52,7 +52,7 @@ public class ReservationService {
     @Value("${reservation-expire-minute}")
     private int RESERVATION_EXPIRE_MINUTE;
 
-
+    // db만 사용한 저장
     @Transactional
     public Mono<ReservationResponse> createReservation(AuthUser authUser, ReservationCreateRequest request) {
         // 좌석 조회
@@ -85,6 +85,7 @@ public class ReservationService {
                 .map(ReservationResponse::fromEntity);
     }
 
+    // db + redis 를 사용해서 예약
     public Mono<ReservationResponse> createReservationByRedis(AuthUser authUser, ReservationCreateRequest request){
         String key = TicketUtil.createPerformanceRedisKey(request.performanceId());
         return redisTemplate.opsForSet().remove(key, String.valueOf(request.performanceSeatId()))
@@ -105,6 +106,7 @@ public class ReservationService {
                 );
     }
 
+    // redis + kafka 를 사용해서 저장
     public Mono<ReservationResponse> createReservationByRedisAndKafka(AuthUser authUser, ReservationCreateRequest request){
         String seatSetKey = TicketUtil.createPerformanceRedisKey(request.performanceId());
         String seatDetailKey = TicketUtil.createDetailKey(seatSetKey);
@@ -206,23 +208,22 @@ public class ReservationService {
                 .map(tuple -> new PageImpl<>(tuple.getT1(), pageable, tuple.getT2()));
     }
 
-    //TODO 3번 db 조회가 비효율 적일 수도 있음. 비효율 적으로 판단 될 시, 실패 했을때만 조회하는 방식으로 변경
     @Transactional
     public Mono<ReservationResponse> cancelReservation(AuthUser authUser, Long reservationId){
 
         return reservationRepository.findById(reservationId)
-                // 1. 권한 체크
+                //권한 체크
                 .filter(r -> r.getUserId().equals(authUser.userId()))
                 .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.NOT_RESERVATION_OWNER)))
 
-                // 2. 상태 체크
+                //상태 체크
                 .filter(r -> r.getStatus() != ReservationStatus.CANCELLED)
                 .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.ALREADY_CANCELLED_RESERVATION)))
 
-                // 3. 원자적 취소 실행 (결과는 Mono<Long>)
+                //원자적 취소 실행 (결과는 Mono<Long>)
                 .flatMap(r -> reservationRepository.cancelReservation(reservationId))
 
-                // 4. 성공 여부 확인 후 데이터 재조회
+                //성공 여부 확인 후 데이터 재조회
                 .flatMap(count -> {
                     if (count == 0) {
                         // 업데이트가 안 됐다면? 그 사이에 10분이 지났거나 상태가 변한 것
@@ -236,7 +237,7 @@ public class ReservationService {
     }
 
     /**
-     * 결제 대기후 일정 시간동안 확정되지 않은 예약을 만료 시키고 좌석 원복
+     * 결제 대기후 일정 시간동안 확정되지 않은(미결제) 예약을 만료 시키고 좌석 원복
      * @return
      */
     @Transactional

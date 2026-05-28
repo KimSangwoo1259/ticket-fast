@@ -29,9 +29,7 @@ public class RedisWarmUpService {
         return performanceSeatRepository.findAllByPerformanceIdAndStatus(performanceId, SeatStatus.AVAILABLE)
                 .flatMap(seat -> {
                     String seatId = String.valueOf(seat.getId());
-
                     SeatInfo info = new SeatInfo(seat.getSeatCode(), seat.getPrice());
-
                     return Mono.zip(
                             redisTemplate.opsForSet().add(seatSetKey, seatId),
                             redisTemplate.opsForHash().put(seatDetailKey, seatId, objectMapper.writeValueAsString(info))

@@ -40,6 +40,6 @@ public class ReservationConsumer {
                 .thenMany(Flux.fromIterable(events))
                 .flatMap(event -> performanceSeatRepository.reserveSeat(event.performanceSeatId()))
                 .collectList()
-                .block(); // 또는 리스너 타입에 따라 적절히 처리
+                .block();
     }
 }
