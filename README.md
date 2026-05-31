@@ -61,7 +61,7 @@
 
 | 서비스명 | 구동 환경 | 핵심 역할 및 비즈니스 경계 |
 | --- | --- | --- |
-| **`ticket-gateway`** | WebFlux (Netty) | 단일 진입점 라우팅, 최전방 JWT 서명 검증, 사칭 헤더(`X-USER-ID`) 변조 방지 및 내부 전파 |
+| **`ticket-gateway`** | WebFlux (Netty) | 단일 진입점 라우팅, 최전방 JWT 서명 검증, 헤더변조 방지 및 내부 전파 |
 | **`ticket-member-service`** | Spring MVC (Tomcat) | 회원 가입, 로그인, 마이페이지 관리 등 데이터의 정밀한 트랜잭션(ACID) 보장 및 일관성 관리 |
 | **`ticket-order-service`** | WebFlux (Netty) | 대규모 티켓 예매 처리, 실시간 좌석 상태 관리, 고속 티켓팅 이벤트 발행 |
 | **`ticket-ai-service`** | WebFlux (Netty) | Qdrant 벡터 DB 연동을 통한 대화형 공연 추천 RAG 챗봇 서비스 가동 |
