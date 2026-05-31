@@ -21,6 +21,7 @@ public class ReservationConsumer {
     private final PerformanceSeatRepository performanceSeatRepository;
 
 
+    //todo: 데이터 유실 어떻게 할건지?
     @KafkaListener(topics = "ticketing-topic", groupId = "ticket-group")
     public void consume(List<ReservationEvent> events){
         log.info("수신된 예약 이벤트 개수: {}",events.size());
