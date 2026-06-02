@@ -17,11 +17,14 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all # 리더, 팔로워 브로커 모두 메시지 잘 받았는지 확인(데이터 유실 방지)
     security:
       protocol: SASL_SSL
     properties:
+      delivery.timeout.ms: 120000
       sasl.mechanism: PLAIN
       sasl.jaas.config: 'org.apache.kafka.common.security.plain.PlainLoginModule required username="STPOK3ZQPT3IUBKW" password="cflt8GGp4tclzIjSBS0F56g4nSqZeiHJPMQiU8vMTHaMIt9wCSIiRDzsXIJECViA";'
+
 
     consumer:
       max-poll-records: 100
