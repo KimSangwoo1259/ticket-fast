@@ -2,6 +2,7 @@ package com.ticket.fast.ticket.repository;
 
 import com.ticket.fast.ticket.domain.Reservation;
 import com.ticket.fast.ticket.domain.ReservationStatus;
+import com.ticket.fast.ticket.repository.custom.ReservationRepositoryCustom;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
@@ -11,7 +12,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 
-public interface ReservationRepository extends R2dbcRepository<Reservation,Long> {
+public interface ReservationRepository extends R2dbcRepository<Reservation,Long>, ReservationRepositoryCustom {
     Flux<Reservation> findByUserId(Long userId, Pageable pageable);
 
     Mono<Long> countByUserId(Long userId);

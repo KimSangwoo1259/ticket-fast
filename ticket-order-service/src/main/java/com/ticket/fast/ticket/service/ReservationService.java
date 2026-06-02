@@ -72,14 +72,12 @@ public class ReservationService {
                                             .price(seat.getPrice())
                                             .status(ReservationStatus.PENDING)
                                             .build())
-                                    .doOnSuccess(saved -> {
-                                        eventHub.publish(new SeatStatusEvent(
-                                                saved.getPerformanceId(),
-                                                saved.getSeatCode(),
-                                                SeatStatus.RESERVED,
-                                                LocalDateTime.now()
-                                        ));
-                                    });
+                                    .doOnSuccess(saved -> eventHub.publish(new SeatStatusEvent(
+                                            saved.getPerformanceId(),
+                                            saved.getSeatCode(),
+                                            SeatStatus.RESERVED,
+                                            LocalDateTime.now()
+                                    )));
                         }))
                 .doOnNext(reservation -> log.info("예약 저장 성공 id: {}", reservation.getId()))
                 .map(ReservationResponse::fromEntity);
@@ -127,6 +125,8 @@ public class ReservationService {
                                     );
 
                                     return Mono.fromFuture(kafkaTemplate.send("ticketing-topic", event))
+                                            .doOnError(e -> log.error(" [CRITICAL] kafka 전송 최종 실패 유저id: {}, 좌석id: {}, 에러: {}",
+                                                    authUser.userId(),seatId,e.getMessage(),e))
                                             .thenReturn(ReservationResponse.pending(authUser.userId(), request, info));
                                 });
 
