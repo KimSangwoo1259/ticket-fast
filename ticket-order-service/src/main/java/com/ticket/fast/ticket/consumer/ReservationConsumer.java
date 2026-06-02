@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
@@ -19,28 +20,24 @@ import java.util.List;
 public class ReservationConsumer {
     private final ReservationRepository reservationRepository;
     private final PerformanceSeatRepository performanceSeatRepository;
+    private final TransactionalOperator transactionalOperator;
 
 
     //todo: 데이터 유실 어떻게 할건지?
-    @KafkaListener(topics = "ticketing-topic", groupId = "ticket-group")
+    @KafkaListener(
+            topics = "ticketing-topic",
+            groupId = "ticket-group",
+            properties = {"max.poll.records=200"})
     public void consume(List<ReservationEvent> events){
         log.info("수신된 예약 이벤트 개수: {}",events.size());
 
-        List<Reservation> reservations = events.stream()
-                .map(event -> Reservation.builder()
-                        .userId(event.userId())
-                        .performanceId(event.performanceId())
-                        .price(event.price())
-                        .seatCode(event.seatCode())
-                        .status(ReservationStatus.CONFIRMED)
-                        .build())
-                .toList();
 
 
-        reservationRepository.saveAll(reservations)
-                .thenMany(Flux.fromIterable(events))
-                .flatMap(event -> performanceSeatRepository.reserveSeat(event.performanceSeatId()))
-                .collectList()
+        reservationRepository.saveAllEventsWithIgnore(events)
+                .then(performanceSeatRepository.reserveSeatBulk(events.stream().map(ReservationEvent::performanceSeatId).toList()))
+                .as(transactionalOperator::transactional)
+                .doOnError(e -> log.error("배치 저장중 에러 발생 {}", e.getMessage(), e))
                 .block();
+
     }
 }
