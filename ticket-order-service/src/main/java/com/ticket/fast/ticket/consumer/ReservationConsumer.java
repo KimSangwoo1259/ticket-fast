@@ -20,7 +20,6 @@ import java.util.List;
 public class ReservationConsumer {
     private final ReservationRepository reservationRepository;
     private final PerformanceSeatRepository performanceSeatRepository;
-    private final TransactionalOperator transactionalOperator;
 
 
     //todo: 데이터 유실 어떻게 할건지?
@@ -35,7 +34,6 @@ public class ReservationConsumer {
 
         reservationRepository.saveAllEventsWithIgnore(events)
                 .then(performanceSeatRepository.reserveSeatBulk(events.stream().map(ReservationEvent::performanceSeatId).toList()))
-                .as(transactionalOperator::transactional)
                 .doOnError(e -> log.error("배치 저장중 에러 발생 {}", e.getMessage(), e))
                 .block();
 
