@@ -23,6 +23,7 @@ services:
     environment:
       - SPRING_R2DBC_URL=r2dbc:mysql://ticket-mysql:3306/ticket_db
       - SPRING_DATA_REDIS_HOST=ticket-redis
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
     restart: always
     deploy:
       resources:
