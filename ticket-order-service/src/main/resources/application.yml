@@ -47,7 +47,7 @@ reservation-expire-minute: 5
 
 slack:
   webhook:
-    url: https://hooks.slack.com/services/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
+    url: ${SLACK_WEBHOOK_URL}
 
 
 
