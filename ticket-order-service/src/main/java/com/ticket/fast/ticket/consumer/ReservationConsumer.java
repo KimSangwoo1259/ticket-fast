@@ -22,7 +22,6 @@ public class ReservationConsumer {
     private final PerformanceSeatRepository performanceSeatRepository;
 
 
-    //todo: 데이터 유실 어떻게 할건지?
     @KafkaListener(
             topics = "ticketing-topic",
             groupId = "ticket-group",
