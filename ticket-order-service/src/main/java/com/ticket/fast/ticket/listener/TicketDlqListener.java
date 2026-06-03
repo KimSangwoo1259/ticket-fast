@@ -16,7 +16,7 @@ public class TicketDlqListener {
 
     private final WebClient webClient;
 
-    @Value("${slack.webhook-url}")
+    @Value("${slack.webhook.url}")
     private String slackWebhookUrl;
 
     public TicketDlqListener(WebClient.Builder webClientBuilder) {
