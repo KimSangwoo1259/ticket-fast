@@ -25,7 +25,8 @@ public class ReservationConsumer {
     @KafkaListener(
             topics = "ticketing-topic",
             groupId = "ticket-group",
-            properties = {"max.poll.records=200"})
+            properties = {"max.poll.records=200"}) // 200개씩 끊어서 처리
+
     public void consume(List<ReservationEvent> events){
         log.info("수신된 예약 이벤트 개수: {}",events.size());
 

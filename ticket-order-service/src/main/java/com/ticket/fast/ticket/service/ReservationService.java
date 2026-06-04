@@ -112,6 +112,7 @@ public class ReservationService {
 
         return redisTemplate.opsForSet().remove(seatSetKey, seatId)
                 .flatMap(removedCount -> {
+                    //좌석 선점 완료 경우
                     if (removedCount == 1) {
                         return redisTemplate.opsForHash().get(seatDetailKey, seatId)
                                 .map(json -> objectMapper.readValue(json.toString(), SeatInfo.class))
@@ -125,7 +126,7 @@ public class ReservationService {
                                     );
 
                                     return Mono.fromFuture(kafkaTemplate.send("ticketing-topic", event))
-                                            .doOnError(e -> log.error(" [CRITICAL] kafka 전송 최종 실패 유저id: {}, 좌석id: {}, 에러: {}",
+                                            .doOnError(e -> log.error(" [CRITICAL] kafka 전송 최종 실패 유저 d: {}, 좌석id: {}, 에러: {}",
                                                     authUser.userId(),seatId,e.getMessage(),e))
                                             .thenReturn(ReservationResponse.pending(authUser.userId(), request, info));
                                 });
@@ -135,9 +136,11 @@ public class ReservationService {
                     return Mono.error(new BusinessException(ErrorCode.NOT_AVAILABLE_RESERVATION));
                 }).onErrorResume(
                         e -> {
+                            // 단순 좌석이 이미 선점되어서 발생한 오류인 경우
                             if (e instanceof BusinessException) return Mono.error(e);
 
                             log.error("예약중 에러 발생 e {}",e.getMessage(),e);
+                            //좌석 선점이 아닌 다른 예상치 못한 오류의 경우 -> redis 에 좌석 복구
                             return redisTemplate.opsForSet().add(seatSetKey, String.valueOf(request.performanceSeatId()))
                                     .then(Mono.error(new BusinessException(ErrorCode.RESERVATION_NOT_SAVED)));
                         }
@@ -254,6 +257,7 @@ public class ReservationService {
 
             return performanceSeatRepository.findByPerformanceIdAndSeatCode(reservation.getPerformanceId(), reservation.getSeatCode())
                     .flatMap(seat -> {
+                        // db 상에서 좌석 선점 해제
                         seat.release();
                         return performanceSeatRepository.save(seat)
                                 .flatMap(savedSeat -> {
@@ -263,21 +267,20 @@ public class ReservationService {
 
                                     SeatInfo info = new SeatInfo(savedSeat.getSeatCode(), savedSeat.getPrice());
                                     return Mono.fromCallable(() -> objectMapper.writeValueAsString(info))
+                                            //redis 에 좌석 복구
                                             .flatMap(json -> Mono.zip(
                                                     redisTemplate.opsForSet().add(seatSetKey, seatId),
                                                     redisTemplate.opsForHash().put(seatDetailKey, seatId, json)
                                             ));
 
                                 })
-                                .doOnSuccess(s -> {
-                                    eventHub.publish(new SeatStatusEvent(
-                                            reservation.getPerformanceId(),
-                                            reservation.getSeatCode(),
-                                            SeatStatus.AVAILABLE,
-                                            LocalDateTime.now()
-                                    ));
-
-                                });
+                                // SSE 로 좌석 풀림 알림
+                                .doOnSuccess(s -> eventHub.publish(new SeatStatusEvent(
+                                        reservation.getPerformanceId(),
+                                        reservation.getSeatCode(),
+                                        SeatStatus.AVAILABLE,
+                                        LocalDateTime.now()
+                                )));
                     }).then(reservationRepository.save(reservation));
         },10).then();
 
