@@ -1,6 +1,6 @@
 package com.ticket.fast.ticket.listener;
 
-import com.ticket.fast.ticket.dto.ReservationEvent;
+import com.ticket.fast.ticket.dto.event.ReservationEvent;
 import com.ticket.fast.ticket.util.TicketUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
