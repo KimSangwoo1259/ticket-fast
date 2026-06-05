@@ -3,6 +3,8 @@ package com.ticket.fast.ticket.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
@@ -25,5 +27,20 @@ public class KafkaConfig {
         DefaultErrorHandler errorHandler = new DefaultErrorHandler(recoverer, backOff);
 
         return errorHandler;
+    }
+
+
+    // 배치 리스너 활성화
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String,Object> kafkaListenerContainerFactory(
+            ConsumerFactory<String,Object> consumerFactory
+    ){
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
+
+        factory.setConsumerFactory(consumerFactory);
+
+        factory.setBatchListener(true);
+
+        return factory;
     }
 }

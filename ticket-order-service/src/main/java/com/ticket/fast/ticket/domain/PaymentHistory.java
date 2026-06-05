@@ -16,6 +16,8 @@ public class PaymentHistory {
     @Id
     private Long id;
 
+    private Long userId;
+
     private Long reservationId;
 
     private Integer amount;
@@ -30,11 +32,14 @@ public class PaymentHistory {
     private Long version;
 
     @Builder
-    private PaymentHistory (Long reservationId,
-                            Integer amount,
-                            PaymentStatus status,
-                            String method) {
+    private PaymentHistory(Long userId,
+                           Long reservationId,
+                           Integer amount,
+                           PaymentStatus status,
+                           String method) {
+
         this.id = TsidUtil.nextLong();
+        this.userId = userId;
         this.reservationId = reservationId;
         this.amount = amount;
         this.status = status;
