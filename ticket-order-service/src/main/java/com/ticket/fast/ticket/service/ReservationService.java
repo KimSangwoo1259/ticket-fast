@@ -4,7 +4,8 @@ import com.ticket.fast.common.dto.AuthUser;
 import com.ticket.fast.common.exception.BusinessException;
 import com.ticket.fast.common.exception.ErrorCode;
 import com.ticket.fast.ticket.domain.*;
-import com.ticket.fast.ticket.dto.ReservationEvent;
+import com.ticket.fast.ticket.dto.event.PaymentEvent;
+import com.ticket.fast.ticket.dto.event.ReservationEvent;
 import com.ticket.fast.ticket.dto.SeatInfo;
 import com.ticket.fast.ticket.dto.request.PaymentRequest;
 import com.ticket.fast.ticket.dto.request.ReservationCreateRequest;
@@ -26,6 +27,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.reactive.TransactionalOperator;
@@ -187,13 +189,29 @@ public class ReservationService {
         return Mono.just(request)
                 .flatMap(req -> {
                     PaymentHistory paymentHistory = PaymentHistory.builder()
+                            .userId(reservation.getUserId())
                             .amount(req.amount())
                             .reservationId(reservation.getId())
                             .method(req.method())
                             .status(success ? PaymentStatus.SUCCESS : PaymentStatus.FAIL)
                             .build();
-
                     return paymentHistoryRepository.save(paymentHistory).map(PaymentResponse::fromEntity);
+                });
+    }
+
+    public Mono<Void> approvePaymentByKafka(AuthUser authUser, PaymentRequest request){
+        return reservationRepository.findById(request.reservationId())
+                .filter(res -> res.getStatus().equals(ReservationStatus.PENDING))
+                .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.NOT_AVAILABLE_RESERVATION)))
+                .flatMap(reservation -> {
+                    PaymentEvent paymentEvent = new PaymentEvent(
+                            authUser.userId(),
+                            reservation.getId(),
+                            request.amount(),
+                            request.method()
+                    );
+                    return Mono.fromFuture(kafkaTemplate.send("payment-topic", paymentEvent))
+                            .then();
                 });
     }
 
@@ -223,7 +241,7 @@ public class ReservationService {
                 .filter(r -> r.getStatus() != ReservationStatus.CANCELLED)
                 .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.ALREADY_CANCELLED_RESERVATION)))
 
-                //원자적 취소 실행 (결과는 Mono<Long>)
+                //원자적 취소 실행
                 .flatMap(r -> reservationRepository.cancelReservation(reservationId))
 
                 //성공 여부 확인 후 데이터 재조회
@@ -232,7 +250,6 @@ public class ReservationService {
                         // 업데이트가 안 됐다면? 그 사이에 10분이 지났거나 상태가 변한 것
                         return Mono.error(new BusinessException(ErrorCode.CANCELLATION_FAILED));
                     }
-                    // 성공했다면 DB에서 '진짜 최신' 데이터를 다시 가져옵니다.
                     return reservationRepository.findById(reservationId);
                 }).map(ReservationResponse::fromEntity)
                 .doOnSuccess(r -> log.info("예약 취소 성공 예약 id{}", reservationId))

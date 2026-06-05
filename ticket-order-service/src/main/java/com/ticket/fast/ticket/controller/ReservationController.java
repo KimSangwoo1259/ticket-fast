@@ -51,6 +51,14 @@ public class ReservationController {
                 .map(response -> ResponseEntity.ok(ApiResponse.success(response)));
     }
 
+    @PostMapping("/v2/payment")
+    public Mono<ResponseEntity<ApiResponse<Void>>> approvePaymentByKafka(@LoginUser AuthUser authUser,
+                                                                  @RequestBody PaymentRequest paymentRequest){
+        return reservationService.approvePaymentByKafka(authUser, paymentRequest)
+                .then(Mono.just(ResponseEntity.ok(ApiResponse.success(null))));
+    }
+
+
     @GetMapping
     public Mono<ResponseEntity<ApiResponse<Page<ReservationWithPerformanceResponse>>>> getMyReservations(@LoginUser AuthUser authUser,
                                                                                                          @PageableDefault(size = 10, page = 0) Pageable pageable){

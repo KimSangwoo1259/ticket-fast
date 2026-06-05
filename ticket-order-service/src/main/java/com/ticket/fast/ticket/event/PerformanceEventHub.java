@@ -11,7 +11,7 @@ public class PerformanceEventHub {
     private final Sinks.Many<SeatStatusEvent> seatSink =
             Sinks.many().multicast().onBackpressureBuffer(1024);
 
-    // 이벤트를 밖으로 쏴줄 때 (Flux로 변환)
+    // 이벤트를 밖으로 쏴줄 때
     public Flux<SeatStatusEvent> subscribe() {
         return seatSink.asFlux();
     }

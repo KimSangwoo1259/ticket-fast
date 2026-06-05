@@ -1,16 +1,12 @@
 package com.ticket.fast.ticket.consumer;
 
-import com.ticket.fast.ticket.domain.Reservation;
-import com.ticket.fast.ticket.domain.ReservationStatus;
-import com.ticket.fast.ticket.dto.ReservationEvent;
+import com.ticket.fast.ticket.dto.event.ReservationEvent;
 import com.ticket.fast.ticket.repository.PerformanceSeatRepository;
 import com.ticket.fast.ticket.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.reactive.TransactionalOperator;
-import reactor.core.publisher.Flux;
 
 import java.util.List;
 
