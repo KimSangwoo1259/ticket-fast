@@ -1,7 +1,7 @@
 package com.ticket.fast.ticket.repository.custom;
 
 import com.ticket.fast.common.util.TsidUtil;
-import com.ticket.fast.ticket.dto.ReservationEvent;
+import com.ticket.fast.ticket.dto.event.ReservationEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;

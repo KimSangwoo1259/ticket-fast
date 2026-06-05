@@ -1,4 +1,4 @@
-package com.ticket.fast.ticket.dto;
+package com.ticket.fast.ticket.dto.event;
 
 public record ReservationEvent(
         Long userId,
