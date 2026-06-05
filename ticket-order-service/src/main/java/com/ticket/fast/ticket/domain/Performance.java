@@ -12,7 +12,7 @@ import tools.jackson.databind.annotation.JsonDeserialize;
 import java.time.LocalDateTime;
 
 @Getter
-@Table("performance")
+@Table("performance_test")
 public class Performance {
 
     @Id
