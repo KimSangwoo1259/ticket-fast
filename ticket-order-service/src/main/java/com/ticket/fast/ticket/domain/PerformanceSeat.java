@@ -7,7 +7,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table("performance_seat_test")
+@Table("performance_seat")
 @Getter
 public class PerformanceSeat {
     @Id
