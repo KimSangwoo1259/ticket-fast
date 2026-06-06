@@ -27,7 +27,7 @@ public class ReservationController {
     @PostMapping
     public Mono<ResponseEntity<ApiResponse<ReservationResponse>>> createReservation(@LoginUser AuthUser authUser,
                                                                                     @RequestBody ReservationCreateRequest request){
-        return reservationService.createReservationByRedis(authUser, request).map(
+        return reservationService.createReservation(authUser, request).map(
                 response -> ResponseEntity.status(HttpStatus.CREATED)
                         .body(ApiResponse.success(response))
         );
