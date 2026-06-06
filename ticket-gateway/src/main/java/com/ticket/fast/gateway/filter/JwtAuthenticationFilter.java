@@ -36,7 +36,7 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             //  k6 성능 테스트 위함. 헤더에 X-TEST-MODE: true가 포함되어 있으면 인증 로직을 전체 스킵
             String testMode = request.getHeaders().getFirst("X-TEST-MODE");
             if ("true".equals(testMode)) {
-                log.info("Performance Test Mode 활성화: 인증 로직을 건너뜁니다. Target: {}", request.getPath());
+//                log.info("Performance Test Mode 활성화: 인증 로직을 건너뜁니다. Target: {}", request.getPath());
                 // 헤더 청소(remove)를 하지 않고, k6가 보낸 X-USER-ID를 그대로 들고 다음 필터로 넘기기
                 return chain.filter(exchange);
             }
