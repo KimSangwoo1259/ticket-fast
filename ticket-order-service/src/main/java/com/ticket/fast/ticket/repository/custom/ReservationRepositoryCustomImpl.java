@@ -41,7 +41,7 @@ public class ReservationRepositoryCustomImpl implements ReservationRepositoryCus
 
         for (int i = 0; i < events.size(); i++){
             ReservationEvent event = events.get(i);
-            executeSpec
+            executeSpec = executeSpec
                     .bind("id" + i, TsidUtil.nextLong())
                     .bind("perfId" + i, event.performanceId())
                     .bind("userId" + i, event.userId())
