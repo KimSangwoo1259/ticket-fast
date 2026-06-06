@@ -315,8 +315,7 @@ public class ReservationService {
 
         String seatId = String.valueOf(seat.getId());
 
-        SeatInfo info =
-                new SeatInfo(seat.getSeatCode(), seat.getPrice());
+        SeatInfo info = new SeatInfo(seat.getSeatCode(), seat.getPrice());
 
         return Mono.fromCallable(() ->
                         objectMapper.writeValueAsString(info)
@@ -367,7 +366,6 @@ public class ReservationService {
     private Mono<Void> publishSeatReleaseEvent(
             Reservation reservation
     ) {
-
         return Mono.fromRunnable(() ->
                 eventHub.publish(
                         new SeatStatusEvent(
