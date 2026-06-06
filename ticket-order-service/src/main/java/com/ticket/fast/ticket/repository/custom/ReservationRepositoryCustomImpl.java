@@ -25,7 +25,7 @@ public class ReservationRepositoryCustomImpl implements ReservationRepositoryCus
 
         String valuesClause = IntStream.range(0, events.size())
                 .mapToObj(i -> String.format(
-                        "(:id%d, :perfId%d, :userId%d, :seatCode%d, :price%d, 'CONFIRMED', :createdAt%d)",
+                        "(:id%d, :perfId%d, :userId%d, :seatCode%d, :price%d, 'PENDING', :createdAt%d)",
                         i, i, i, i, i, i))
                 .collect(Collectors.joining(", "));
 
