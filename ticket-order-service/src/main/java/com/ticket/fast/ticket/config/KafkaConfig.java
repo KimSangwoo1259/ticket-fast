@@ -8,6 +8,8 @@ import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.kafka.support.converter.BatchMessagingMessageConverter;
+import org.springframework.kafka.support.converter.StringJacksonJsonMessageConverter;
 import org.springframework.util.backoff.FixedBackOff;
 
 @Configuration
@@ -40,6 +42,8 @@ public class KafkaConfig {
         factory.setConsumerFactory(consumerFactory);
 
         factory.setBatchListener(true);
+       // JSON 문자열을 객체로 변환해 주는 배치 컨버터
+        factory.setBatchMessageConverter(new BatchMessagingMessageConverter(new StringJacksonJsonMessageConverter()));
 
         return factory;
     }
