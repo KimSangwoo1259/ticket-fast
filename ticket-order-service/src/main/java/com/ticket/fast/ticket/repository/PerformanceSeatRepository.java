@@ -34,4 +34,18 @@ public interface PerformanceSeatRepository extends R2dbcRepository<PerformanceSe
         WHERE id IN (:ids) AND status = 'AVAILABLE'
     """)
     Mono<Integer> reserveSeatBulk(List<Long> ids);
+
+
+    @Modifying
+    @Query("""
+        UPDATE performance_seat
+        SET status = 'AVAILABLE'
+        WHERE performance_id = :performanceId
+          AND seat_code = :seatCode
+          AND status = 'RESERVED'
+        """)
+    Mono<Integer> releaseSeat(
+            Long performanceId,
+            String seatCode
+    );
 }

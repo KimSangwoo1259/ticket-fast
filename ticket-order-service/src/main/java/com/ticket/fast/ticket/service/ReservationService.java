@@ -51,6 +51,7 @@ public class ReservationService {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ObjectMapper objectMapper;
 
+
     @Value("${reservation-expire-minute}")
     private int RESERVATION_EXPIRE_MINUTE;
 
@@ -260,46 +261,122 @@ public class ReservationService {
      * 결제 대기후 일정 시간동안 확정되지 않은(미결제) 예약을 만료 시키고 좌석 원복
      * @return
      */
-    @Transactional
     public Mono<Void> processExpiredReservations() {
-        LocalDateTime expirationThreshold = LocalDateTime.now().minusMinutes(RESERVATION_EXPIRE_MINUTE);
 
-        return reservationRepository.findTop500ByStatusAndCreatedAtBefore(
-                ReservationStatus.PENDING, expirationThreshold
-        ).collectList()// 조회가 완전히 끝날 때까지 대기 (데드락 방지)
-                .flatMapMany(Flux::fromIterable)
-                .flatMap(reservation -> {
-                    log.info("만료 대상 발견: {}", reservation.getId());
-            reservation.expire();
+        LocalDateTime expirationThreshold =
+                LocalDateTime.now()
+                        .minusMinutes(RESERVATION_EXPIRE_MINUTE);
 
-            return performanceSeatRepository.findByPerformanceIdAndSeatCode(reservation.getPerformanceId(), reservation.getSeatCode())
-                    .flatMap(seat -> {
-                        // db 상에서 좌석 선점 해제
-                        seat.release();
-                        return performanceSeatRepository.save(seat)
-                                .flatMap(savedSeat -> {
-                                    String seatSetKey = TicketUtil.createPerformanceRedisKey(reservation.getPerformanceId());
-                                    String seatDetailKey = TicketUtil.createDetailKey(seatSetKey);
-                                    String seatId = String.valueOf(savedSeat.getId());
+        return reservationRepository
+                .findTop500ByStatusAndCreatedAtBefore(
+                        ReservationStatus.PENDING,
+                        expirationThreshold
+                )
+                .concatMap(reservation ->
 
-                                    SeatInfo info = new SeatInfo(savedSeat.getSeatCode(), savedSeat.getPrice());
-                                    return Mono.fromCallable(() -> objectMapper.writeValueAsString(info))
-                                            //redis 에 좌석 복구
-                                            .flatMap(json -> Mono.zip(
-                                                    redisTemplate.opsForSet().add(seatSetKey, seatId),
-                                                    redisTemplate.opsForHash().put(seatDetailKey, seatId, json)
-                                            ));
+                        expireReservationInDb(reservation)
+                                .as(transactionalOperator::transactional)
 
+                                // DB 트랜잭션 종료 이후
+                                .flatMap(seat ->
+                                        restoreRedis(seat)
+                                                .then(publishSeatReleaseEvent(reservation))
+                                                .thenReturn(seat)
+                                )
+
+                                .doOnSuccess(seat ->
+                                        log.info(
+                                                "만료 처리 완료 예약 id {}, 유저 id {}, 공연 id {}",
+                                                reservation.getId(),
+                                                reservation.getUserId(),
+                                                reservation.getPerformanceId()
+                                        )
+                                )
+
+                                .onErrorResume(ex -> {
+                                    log.error(
+                                            "예약 만료 처리 실패 reservationId={}",
+                                            reservation.getId(),
+                                            ex
+                                    );
+                                    return Mono.empty();
                                 })
-                                // SSE 로 좌석 풀림 알림
-                                .doOnSuccess(s -> eventHub.publish(new SeatStatusEvent(
-                                        reservation.getPerformanceId(),
-                                        reservation.getSeatCode(),
-                                        SeatStatus.AVAILABLE,
-                                        LocalDateTime.now()
-                                )));
-                    }).then(reservationRepository.save(reservation));
-        },10).then();
+                )
+                .then();
+    }
 
+    private Mono<Void> restoreRedis(PerformanceSeat seat) {
+
+        String seatSetKey =
+                TicketUtil.createPerformanceRedisKey(seat.getPerformanceId());
+
+        String seatDetailKey =
+                TicketUtil.createDetailKey(seatSetKey);
+
+        String seatId = String.valueOf(seat.getId());
+
+        SeatInfo info =
+                new SeatInfo(seat.getSeatCode(), seat.getPrice());
+
+        return Mono.fromCallable(() ->
+                        objectMapper.writeValueAsString(info)
+                )
+                .flatMap(json ->
+                        Mono.zip(
+                                redisTemplate.opsForSet()
+                                        .add(seatSetKey, seatId),
+
+                                redisTemplate.opsForHash()
+                                        .put(seatDetailKey, seatId, json)
+                        )
+                )
+                .then();
+    }
+
+    private Mono<PerformanceSeat> expireReservationInDb(Reservation reservation) {
+
+        return performanceSeatRepository.findByPerformanceIdAndSeatCode(
+                        reservation.getPerformanceId(),
+                        reservation.getSeatCode()
+                )
+                .switchIfEmpty(Mono.error(
+                        new BusinessException(ErrorCode.SEAT_NOT_FOUND)
+                ))
+                .flatMap(seat ->
+                        performanceSeatRepository.releaseSeat(
+                                        reservation.getPerformanceId(),
+                                        reservation.getSeatCode()
+                                )
+                                .flatMap(updatedRows -> {
+
+                                    if (updatedRows == 0) {
+                                        return Mono.error(
+                                                new BusinessException(
+                                                        ErrorCode.ALREADY_CANCELLED_RESERVATION
+                                                )
+                                        );
+                                    }
+                                    seat.release();
+                                    return reservationRepository
+                                            .delete(reservation)
+                                            .thenReturn(seat);
+                                })
+                );
+    }
+
+    private Mono<Void> publishSeatReleaseEvent(
+            Reservation reservation
+    ) {
+
+        return Mono.fromRunnable(() ->
+                eventHub.publish(
+                        new SeatStatusEvent(
+                                reservation.getPerformanceId(),
+                                reservation.getSeatCode(),
+                                SeatStatus.AVAILABLE,
+                                LocalDateTime.now()
+                        )
+                )
+        );
     }
 }
