@@ -73,7 +73,7 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
                     .header(AuthConstant.X_USER_ROLE, (role != null) ? role : "")
                     .build();
 
-            log.info("Gateway 인증 통과: User ID {}", userId);
+//            log.info("Gateway 인증 통과: User ID {}", userId);
 
             return chain.filter(exchange.mutate().request(finalRequest).build());
         };

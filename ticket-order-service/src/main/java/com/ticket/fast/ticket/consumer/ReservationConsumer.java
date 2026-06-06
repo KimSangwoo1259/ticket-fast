@@ -25,9 +25,6 @@ public class ReservationConsumer {
             properties = {"max.poll.records=50"})
 
     public void consume(List<ReservationEvent> events){
-        log.info("수신된 예약 이벤트 개수: {}",events.size());
-
-
 
         reservationRepository.saveAllEventsWithIgnore(events)
                 .then(performanceSeatRepository.reserveSeatBulk(events.stream().map(ReservationEvent::performanceSeatId).toList()))
