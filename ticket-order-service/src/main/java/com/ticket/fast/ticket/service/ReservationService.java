@@ -270,35 +270,35 @@ public class ReservationService {
                 .flatMapMany(Flux::fromIterable)
                 .flatMap(reservation -> {
                     log.info("만료 대상 발견: {}", reservation.getId());
+            reservation.expire();
 
-                    return performanceSeatRepository.findByPerformanceIdAndSeatCode(reservation.getPerformanceId(), reservation.getSeatCode())
-                            .flatMap(seat -> {
-                                // db 상에서 좌석 선점 해제
-                                seat.release();
-                                return performanceSeatRepository.save(seat)
-                                        .flatMap(savedSeat -> {
-                                            String seatSetKey = TicketUtil.createPerformanceRedisKey(reservation.getPerformanceId());
-                                            String seatDetailKey = TicketUtil.createDetailKey(seatSetKey);
-                                            String seatId = String.valueOf(savedSeat.getId());
+            return performanceSeatRepository.findByPerformanceIdAndSeatCode(reservation.getPerformanceId(), reservation.getSeatCode())
+                    .flatMap(seat -> {
+                        // db 상에서 좌석 선점 해제
+                        seat.release();
+                        return performanceSeatRepository.save(seat)
+                                .flatMap(savedSeat -> {
+                                    String seatSetKey = TicketUtil.createPerformanceRedisKey(reservation.getPerformanceId());
+                                    String seatDetailKey = TicketUtil.createDetailKey(seatSetKey);
+                                    String seatId = String.valueOf(savedSeat.getId());
 
-                                            SeatInfo info = new SeatInfo(savedSeat.getSeatCode(), savedSeat.getPrice());
-                                            return Mono.fromCallable(() -> objectMapper.writeValueAsString(info))
-                                                    //redis 에 좌석 복구
-                                                    .flatMap(json -> Mono.zip(
-                                                            redisTemplate.opsForSet().add(seatSetKey, seatId),
-                                                            redisTemplate.opsForHash().put(seatDetailKey, seatId, json)
-                                                    ));
+                                    SeatInfo info = new SeatInfo(savedSeat.getSeatCode(), savedSeat.getPrice());
+                                    return Mono.fromCallable(() -> objectMapper.writeValueAsString(info))
+                                            //redis 에 좌석 복구
+                                            .flatMap(json -> Mono.zip(
+                                                    redisTemplate.opsForSet().add(seatSetKey, seatId),
+                                                    redisTemplate.opsForHash().put(seatDetailKey, seatId, json)
+                                            ));
 
-                                        })
-                                        // SSE 로 좌석 풀림 알림
-                                        .doOnSuccess(s -> eventHub.publish(new SeatStatusEvent(
-                                                reservation.getPerformanceId(),
-                                                reservation.getSeatCode(),
-                                                SeatStatus.AVAILABLE,
-                                                LocalDateTime.now()
-                                        )));
-                            }).then(reservationRepository.delete(reservation)
-                                    .doOnSuccess(v -> log.info("만료된 예약 삭제 완료 예약 id {}, 유저 id {}, 공연 id {}", reservation.getId(), reservation.getUserId(), reservation.getPerformanceId())));
+                                })
+                                // SSE 로 좌석 풀림 알림
+                                .doOnSuccess(s -> eventHub.publish(new SeatStatusEvent(
+                                        reservation.getPerformanceId(),
+                                        reservation.getSeatCode(),
+                                        SeatStatus.AVAILABLE,
+                                        LocalDateTime.now()
+                                )));
+                    }).then(reservationRepository.save(reservation));
         },10).then();
 
     }
