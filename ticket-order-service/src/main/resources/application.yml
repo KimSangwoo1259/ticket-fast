@@ -17,7 +17,7 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      acks: all # 리더, 팔로워 브로커 모두 메시지 잘 받았는지 확인(데이터 유실 방지)
+#      acks: all # 리더, 팔로워 브로커 모두 메시지 잘 받았는지 확인(데이터 유실 방지)
     security:
       protocol: SASL_SSL
     properties:
@@ -43,7 +43,7 @@ jwt:
   access-expiration: 3600000 # 1시간
   refresh-expiration: 1209600000 # 14일
 
-reservation-expire-minute: 3
+reservation-expire-minute: 2
 
 slack:
   webhook:
