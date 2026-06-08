@@ -28,7 +28,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 700M
+          memory: 1G
     depends_on:
       - ticket-db
       - ticket-redis
