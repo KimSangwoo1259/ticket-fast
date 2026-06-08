@@ -33,7 +33,17 @@ public class ReservationController {
         );
     }
 
+
     @PostMapping("/v2")
+    public Mono<ResponseEntity<ApiResponse<ReservationResponse>>> createReservationByRedis(@LoginUser AuthUser authUser,
+                                                                                           @RequestBody ReservationCreateRequest request){
+        return reservationService.createReservationByRedis(authUser, request).map(
+                response -> ResponseEntity.status(HttpStatus.CREATED)
+                        .body(ApiResponse.success(response))
+        );
+    }
+
+    @PostMapping("/v3")
     public Mono<ResponseEntity<ApiResponse<ReservationResponse>>> createReservationByKafka(@LoginUser AuthUser authUser,
                                                                                     @RequestBody ReservationCreateRequest request){
         return reservationService.createReservationByRedisAndKafka(authUser, request).map(
@@ -41,6 +51,7 @@ public class ReservationController {
                         .body(ApiResponse.success(response))
         );
     }
+
 
 
 
