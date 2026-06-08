@@ -14,7 +14,7 @@ public class ReservationScheduler {
 
     private final ReservationService reservationService;
 
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelay = 20000)
     public void cleanupPendingReservations() {
         log.info("만료된 예약 정리 스케줄러 가동");
 
