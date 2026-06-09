@@ -266,7 +266,7 @@ public class ReservationService {
                         .minusMinutes(RESERVATION_EXPIRE_MINUTE);
 
         return reservationRepository
-                .findTop100ByStatusAndCreatedAtBefore(
+                .findTop1000ByStatusAndCreatedAtBefore(
                         ReservationStatus.PENDING,
                         expirationThreshold
                 )
