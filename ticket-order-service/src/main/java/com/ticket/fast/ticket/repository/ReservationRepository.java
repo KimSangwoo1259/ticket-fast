@@ -39,5 +39,5 @@ public interface ReservationRepository extends R2dbcRepository<Reservation,Long>
     @Modifying
     Mono<Long> cancelReservation(Long reservationId);
 
-    Flux<Reservation> findTop100ByStatusAndCreatedAtBefore(ReservationStatus status, LocalDateTime createdAtBefore);
+    Flux<Reservation> findTop1000ByStatusAndCreatedAtBefore(ReservationStatus status, LocalDateTime createdAtBefore);
 }
