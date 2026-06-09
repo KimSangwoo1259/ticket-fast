@@ -27,11 +27,9 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.reactive.TransactionalOperator;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import tools.jackson.databind.ObjectMapper;
 
@@ -268,7 +266,7 @@ public class ReservationService {
                         .minusMinutes(RESERVATION_EXPIRE_MINUTE);
 
         return reservationRepository
-                .findTop500ByStatusAndCreatedAtBefore(
+                .findTop100ByStatusAndCreatedAtBefore(
                         ReservationStatus.PENDING,
                         expirationThreshold
                 )
