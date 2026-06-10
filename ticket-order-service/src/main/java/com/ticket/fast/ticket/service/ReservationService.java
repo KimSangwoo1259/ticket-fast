@@ -90,7 +90,13 @@ public class ReservationService {
         return redisTemplate.opsForSet().remove(key, String.valueOf(request.performanceSeatId()))
                 .flatMap(removedCount -> {
                     if (removedCount == 1) {
-                        return saveReservationToDb(authUser, request).as(transactionalOperator::transactional);
+                        return saveReservationToDb(authUser, request).as(transactionalOperator::transactional)
+                                .doOnSuccess(saved -> eventHub.publish(new SeatStatusEvent(
+                                        saved.performanceId(),
+                                        saved.seatCode(),
+                                        SeatStatus.RESERVED,
+                                        LocalDateTime.now()
+                                )));
                     }
 
                     return Mono.error(new BusinessException(ErrorCode.NOT_AVAILABLE_RESERVATION));
