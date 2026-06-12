@@ -89,6 +89,7 @@ public class ReservationService {
         String key = TicketUtil.createPerformanceRedisKey(request.performanceId());
         return redisTemplate.opsForSet().remove(key, String.valueOf(request.performanceSeatId()))
                 .flatMap(removedCount -> {
+                    // 좌석 선점 성공
                     if (removedCount == 1) {
                         return saveReservationToDb(authUser, request).as(transactionalOperator::transactional)
                                 .doOnSuccess(saved -> eventHub.publish(new SeatStatusEvent(
