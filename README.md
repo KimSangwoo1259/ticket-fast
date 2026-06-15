@@ -105,14 +105,54 @@
 
 # 📊 Performance Test
 
-> k6를 활용하여 Redis, Kafka, ACK 설정 도입 전후의 성능 변화를 측정하였습니다.
+> k6를 활용하여 아키텍처 개선 전후의 성능 변화를 측정하였습니다.
 
-| Scenario                             | TPS   | Avg Response Time | P95   |
-| ------------------------------------ | ----- | ----------------- | ----- |
-| WebFlux                              | 추후 추가 | 추후 추가             | 추후 추가 |
-| WebFlux + Redis                      | 추후 추가 | 추후 추가             | 추후 추가 |
-| WebFlux + Redis + Kafka              | 추후 추가 | 추후 추가             | 추후 추가 |
-| WebFlux + Redis + Kafka (`acks=all`) | 추후 추가 | 추후 추가             | 추후 추가 |
+## 1. 기술 도입 효과 비교 (2,000 Seats)
+
+### Test Environment
+
+* **EC2:** t3.small (2 vCPU / 2GB RAM)
+* **Scenario:** 100명 → 300명 → 500명 점진적 증가 (총 1분)
+* **Seats:** 2,000
+
+| Scenario                             | TPS         | Avg Response Time | P95    |
+| ------------------------------------ | ----------- | ----------------- | ------ |
+| WebFlux                              | 467 req/s   | 363 ms            | 716 ms |
+| WebFlux + Redis                      | 1,434 req/s | 50 ms             | 130 ms |
+| WebFlux + Redis + Kafka              | 1,278 req/s | 69 ms             | 146 ms |
+| WebFlux + Redis + Kafka (`acks=all`) | 1,115 req/s | 93 ms             | 235 ms |
+
+### Summary
+
+* Redis 도입을 통해 읽기 병목을 제거하며 TPS가 약 **3배 증가**하였습니다.
+* Kafka 도입 시 안정적인 비동기 처리 구조를 확보하였으며, 소규모(2,000석) 환경에서는 Producer 호출 오버헤드로 인해 Redis 단독 구성보다 TPS가 소폭 감소하였습니다.
+* `acks=all` 설정 적용 후 응답 시간은 증가했지만, 데이터 유실 가능성을 줄이는 방향으로 안정성을 강화하였습니다.
+
+---
+
+## 2. 대규모 티켓팅 확장성 검증 (20,000 Seats)
+
+### Test Environment
+
+* **EC2:** t3.small (2 vCPU / 2GB RAM)
+* **Scenario:** 100명 → 300명 → 500명 → 1,500명 점진적 증가
+* **Seats:** 20,000
+
+| Scenario                             | TPS         | Avg Response Time | P95    |
+| ------------------------------------ | ----------- | ----------------- | ------ |
+| WebFlux + Redis                      | 1,362 req/s | 523 ms            | 1.21 s |
+| WebFlux + Redis + Kafka              | 1,938 req/s | 338 ms            | 556 ms |
+| WebFlux + Redis + Kafka (`acks=all`) | 1,604 req/s | 429 ms            | 622 ms |
+
+### Summary
+
+* 대규모 쓰기 부하 환경에서는 Redis만으로는 한계가 존재했습니다.
+* Kafka 기반 Write-Behind 패턴 도입 후 TPS가 약 **42% 증가**하였으며, P95 응답 시간 또한 크게 개선되었습니다.
+* `acks=all` 적용 시 TPS는 감소했지만, 데이터 유실 방지 및 신뢰성 확보를 위해 최종적으로 해당 설정을 채택하였습니다.
+
+
+> ⚠️ 본 테스트는 AWS EC2 t3.small(2GB RAM) 단일 인스턴스 환경에서 수행되었으며,
+> 더 높은 사양 및 다중 인스턴스 환경에서는 다른 결과가 나타날 수 있습니다.
 
 ---
 
