@@ -120,13 +120,11 @@
 | WebFlux                              | 467 req/s   | 363 ms            | 716 ms |
 | WebFlux + Redis                      | 1,434 req/s | 50 ms             | 130 ms |
 | WebFlux + Redis + Kafka              | 1,278 req/s | 69 ms             | 146 ms |
-| WebFlux + Redis + Kafka (`acks=all`) | 1,115 req/s | 93 ms             | 235 ms |
 
 ### Summary
 
 * Redis 도입을 통해 읽기 병목을 제거하며 TPS가 약 **3배 증가**하였습니다.
 * Kafka 도입 시 안정적인 비동기 처리 구조를 확보하였으며, 소규모(2,000석) 환경에서는 Producer 호출 오버헤드로 인해 Redis 단독 구성보다 TPS가 소폭 감소하였습니다.
-* `acks=all` 설정 적용 후 응답 시간은 증가했지만, 데이터 유실 가능성을 줄이는 방향으로 안정성을 강화하였습니다.
 
 ---
 
