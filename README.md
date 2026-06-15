@@ -120,11 +120,11 @@
 
 > 구현 과정에서 발생한 주요 문제와 해결 과정을 정리한 문서입니다.
 
-* Redis 기반 좌석 선점 구조 설계
-* Kafka Consumer 멱등성 보장
-* ACK 설정에 따른 성능/안정성 Trade-off 분석
-* k6를 활용한 부하 테스트 및 병목 분석
-* RAG 챗봇 컨텍스트 최적화
+* [CAS기반 좌석 선점 구현](https://grup-swoo.tistory.com/29)
+* [Redis 활용하여 DB 부하 분산](https://grup-swoo.tistory.com/30)
+* [Kafka로 쓰기(write) 병목 해결](https://grup-swoo.tistory.com/31)
+* [kafka 안정성 확보](https://grup-swoo.tistory.com/32)
+* [프로젝트 전체 회고](https://grup-swoo.tistory.com/33)
 
 ---
 
