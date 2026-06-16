@@ -2,6 +2,7 @@ package com.ticket.fast.aiservice.service;
 
 import com.ticket.fast.aiservice.dto.PerformanceDto;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
@@ -29,28 +30,19 @@ public class DataIngestionService {
 
          Flux.fromIterable(performanceList)
                 .map(performance -> {
-                    String content = String.format("공연 정보 안내 \n 공연 ID: %s \n공연명: %s\n 카테고리: %s \n 공연 장소: %s \n 공연 설명: %s\n 시작일시: %s\n 종료일시: %s",
-                            performance.id(),performance.title(), performance.category(), performance.venue(),
-                            performance.description(), performance.startTime(), performance.endTime());
+                    String content = String.format("""
+                                    공연명: %s
+                                    
+                                    설명: %s
+                                    
+                                    장소: %s
+                                    """,
+                            performance.title(),
+                            performance.description(),
+                            performance.venue()
+                    );
 
-                    Map<String, Object> metadata = new HashMap<>();
-
-                    // 나중에 유사도 검색 결과로 나온 ID를 통해 DB(R2DBC/Redis)에서 매핑해 올 식별자
-                    if (performance.id() != null) {
-                        metadata.put("performance_id", performance.id());
-                    }
-
-                    // "뮤지컬 중에서만 검색", "콘서트 중에서만 검색" 등 카테고리 필터링용 (Enum인 경우 .name() 처리)
-                    if (performance.category() != null) {
-                        metadata.put("category", performance.category());
-
-                    }
-
-                    // "상암 월드컵경기장 공연만 필터링" 등 특정 핫플레이스나 장소 기반 필터링용
-                    if (performance.venue() != null) {
-                        metadata.put("venue", performance.venue());
-                    }
-
+                    Map<String, Object> metadata = createMetadataMap(performance);
                     return new Document(content, metadata);
                 })
                 .buffer(5)
@@ -67,5 +59,32 @@ public class DataIngestionService {
 
         // 💡 작업은 백그라운드에서 돌기 시작했고, 유저에게는 게이트웨이가 지치기 전에 0.1초 만에 응답을 줍니다.
         return Mono.just("총 " + performanceList.size() + "개의 공연 데이터 주입을 백그라운드에서 시작했습니다. 로그를 확인하세요!");
+    }
+
+    @NotNull
+    private static Map<String, Object> createMetadataMap(PerformanceDto performance) {
+        Map<String, Object> metadata = new HashMap<>();
+
+        if (performance.id() != null) {
+            metadata.put("performance_id", performance.id());
+        }
+
+        if (performance.category() != null) {
+            metadata.put("category", performance.category());
+        }
+        if (performance.title() != null){
+            metadata.put("title", performance.title());
+        }
+
+        if (performance.venue() != null) {
+            metadata.put("venue", performance.venue());
+        }
+        if (performance.startTime() != null) {
+            metadata.put("startTime", performance.startTime().toLocalDate().toString());
+        }
+        if (performance.endTime() != null) {
+            metadata.put("endTime", performance.endTime().toLocalDate().toString());
+        }
+        return metadata;
     }
 }
