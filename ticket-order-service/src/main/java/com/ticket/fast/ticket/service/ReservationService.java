@@ -157,6 +157,7 @@ public class ReservationService {
 
 
 
+    // db에 직접 저장
     private Mono<ReservationResponse> saveReservationToDb(AuthUser authUser, ReservationCreateRequest request){
         return performanceSeatRepository.findById(request.performanceSeatId())
                 .flatMap(seat -> performanceSeatRepository.reserveSeat(seat.getId()).flatMap(updatedRows -> {
