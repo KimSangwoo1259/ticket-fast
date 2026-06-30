@@ -17,7 +17,8 @@ public class KafkaConfig {
 
     @Bean
     public DefaultErrorHandler errorHandler(KafkaTemplate<Object, Object> kafkaTemplate){
-        // 실패 메시지를 기존토픽명.DLQ 로 전송하는 복구 뼈대 생성
+        // 실패 메시지를 dlq 로 전송하는 복구 뼈대 생성
+        //todo 실제 dlq 로 데이터 가는지 테스트 해보기
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate);
 
 
