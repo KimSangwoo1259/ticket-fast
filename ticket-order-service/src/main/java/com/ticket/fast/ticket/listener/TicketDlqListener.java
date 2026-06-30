@@ -1,15 +1,22 @@
 package com.ticket.fast.ticket.listener;
 
+import com.ticket.fast.ticket.domain.FailedReservation;
 import com.ticket.fast.ticket.dto.event.ReservationEvent;
+import com.ticket.fast.ticket.repository.FailedReservationRepository;
 import com.ticket.fast.ticket.util.TicketUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -17,19 +24,28 @@ import java.util.Map;
 @Slf4j
 public class TicketDlqListener {
 
+
     private final WebClient webClient;
     private final ReactiveRedisTemplate<String, String> redisTemplate;
+    private final FailedReservationRepository failedReservationRepository;
 
     @Value("${slack.webhook.url}")
     private String slackWebhookUrl;
 
-    public TicketDlqListener(WebClient.Builder webClientBuilder, ReactiveRedisTemplate<String, String> reactiveRedisTemplate) {
+    public TicketDlqListener(WebClient.Builder webClientBuilder,
+                             ReactiveRedisTemplate<String, String> reactiveRedisTemplate,
+                             FailedReservationRepository failedReservationRepository) {
+
         this.webClient = webClientBuilder.build();
         this.redisTemplate = reactiveRedisTemplate;
+        this.failedReservationRepository = failedReservationRepository;
     }
 
     @KafkaListener(topics = "ticketing-topic.DLQ", groupId = "ticket-dlq-group")
-    public void consumeDlq(List<ReservationEvent> failedEvents){
+    public void consumeDlq(
+            @Payload List<ReservationEvent> failedEvents,
+            @Header(KafkaHeaders.DLT_EXCEPTION_MESSAGE) List<String> exceptionMessages,
+            @Header(KafkaHeaders.DLT_EXCEPTION_FQCN) List<String> exceptionTypes){
         log.error("Error detected Failed {} Data enqueued in DLQ, ",failedEvents.size());
 
         String slackMessage = String.format("""
@@ -43,13 +59,35 @@ public class TicketDlqListener {
                 failedEvents.get(0).performanceSeatId(),
                 failedEvents.size() - 1);
 
-        // 2. Redis 롤백 파이프라인과 Slack 전송 파이프라인 결합
+        List<FailedReservation> failedReservations = new ArrayList<>();
+
+        for (int i = 0; i < failedEvents.size(); i++) {
+            ReservationEvent event = failedEvents.get(i);
+
+            String exactReason = exceptionTypes.get(i) + ": " + exceptionMessages.get(i);
+
+            failedReservations.add(FailedReservation.fromEvent(event, exactReason));
+        }
+
         Flux.fromIterable(failedEvents)
+                //실패 한 좌석 redis 복구
                 .flatMap(event -> {
                     String seatSetKey = TicketUtil.createPerformanceRedisKey(event.performanceId());
                     return redisTemplate.opsForSet().add(seatSetKey, String.valueOf(event.performanceSeatId()));
                 })
-                // Redis 처리가 모두 끝나면(.then), Slack 알림 전송을 시작함
+                //실패 내역 db 저장
+                .then(
+                        failedReservationRepository.saveAll(failedReservations)
+                                .then()
+                                .onErrorResume(
+                                        e -> {
+                                            log.error("실패 이력 DB 저장 실패 {}",e.getMessage(), e);
+                                            return Mono.empty();
+                                        }
+                                )
+                )
+                // 실패 내역 slack 알림 전송
+
                 .then(
                         webClient.post()
                                 .uri(slackWebhookUrl)
@@ -60,5 +98,7 @@ public class TicketDlqListener {
                 .doOnSuccess(response -> log.info("Redis 롤백(보상 트랜잭션) 및 슬랙 알림 전송 완료"))
                 .doOnError(e -> log.error("DLQ 후속 처리(보상/알림) 중 크리티컬 에러 발생: {}", e.getMessage(), e))
                 .block();
+
+
     }
 }
