@@ -1,6 +1,7 @@
 package com.ticket.fast.ticket.config;
 
 
+import org.apache.kafka.common.TopicPartition;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -16,34 +17,36 @@ import org.springframework.util.backoff.FixedBackOff;
 public class KafkaConfig {
 
     @Bean
-    public DefaultErrorHandler errorHandler(KafkaTemplate<Object, Object> kafkaTemplate){
-        // 실패 메시지를 dlq 로 전송하는 복구 뼈대 생성
-        //todo 실제 dlq 로 데이터 가는지 테스트 해보기
-        DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate);
+    public DeadLetterPublishingRecoverer deadLetterPublishingRecoverer(KafkaTemplate<Object, Object> kafkaTemplate) {
+        //기존토빅.DLQ 로 보내도록
+        return new DeadLetterPublishingRecoverer(kafkaTemplate,
+                (cr, e) -> new TopicPartition(cr.topic() + ".DLQ", cr.partition())
+        );
+    }
+    @Bean
+    public DefaultErrorHandler errorHandler(DeadLetterPublishingRecoverer recoverer) {
+        // 3번 실패 시 DLQ로 전송
+        FixedBackOff fixedBackOff = new FixedBackOff(1000L, 2);
 
-
-        //에러간격: 1초, 최대 재시도 횟수: 3
-        //총 3번 시도후 실패하면 DLQ 토픽으로 던진 후 오프셋 상제 커밋
-        FixedBackOff backOff = new FixedBackOff(1000L, 3L);
-
-
-        DefaultErrorHandler errorHandler = new DefaultErrorHandler(recoverer, backOff);
-
-        return errorHandler;
+        return new DefaultErrorHandler(recoverer, fixedBackOff);
     }
 
 
     // 배치 리스너 활성화
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String,Object> kafkaListenerContainerFactory(
-            ConsumerFactory<String,Object> consumerFactory
-    ){
+    public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory(
+            ConsumerFactory<String, Object> consumerFactory,
+            DefaultErrorHandler errorHandler
+    ) {
+
         ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
 
         factory.setConsumerFactory(consumerFactory);
 
+        factory.setCommonErrorHandler(errorHandler);
+
         factory.setBatchListener(true);
-       // JSON 문자열을 객체로 변환해 주는 배치 컨버터
+        // JSON 문자열을 객체로 변환해 주는 배치 컨버터
         factory.setBatchMessageConverter(new BatchMessagingMessageConverter(new StringJacksonJsonMessageConverter()));
 
         return factory;
