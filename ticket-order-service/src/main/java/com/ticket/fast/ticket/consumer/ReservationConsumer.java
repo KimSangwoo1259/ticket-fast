@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.listener.BatchListenerFailedException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.reactive.TransactionalOperator;
 
 import java.util.List;
 
@@ -18,18 +19,21 @@ import java.util.List;
 public class ReservationConsumer {
     private final ReservationRepository reservationRepository;
     private final PerformanceSeatRepository performanceSeatRepository;
+    private final TransactionalOperator transactionalOperator;
 
 
     @KafkaListener(
             topics = "ticketing-topic",
-            groupId = "ticket-group",
+            groupId = "ticket-group-test",
             concurrency = "3",
-            properties = {"max.poll.records=50"})
+            properties = {"max.poll.records=50"},
+            containerFactory = "batchKafkaListenerContainerFactory")
 
     public void consume(List<ReservationEvent> events){
         try{
             reservationRepository.saveAllEventsWithIgnore(events)
                     .then(performanceSeatRepository.reserveSeatBulk(events.stream().map(ReservationEvent::performanceSeatId).toList()))
+                    .as(transactionalOperator::transactional)
                     .doOnError(e -> log.error("배치 저장중 에러 발생 {}", e.getMessage(), e))
                     .block();
         } catch (Exception bulkException){
@@ -40,6 +44,7 @@ public class ReservationConsumer {
                 try {
                     reservationRepository.save(ReservationEvent.toEntity(event))
                             .then(performanceSeatRepository.reserveSeat(event.performanceSeatId()))
+                            .as(transactionalOperator::transactional)
                             .block();
                 } catch (Exception individualException){
                     log.error("배치중 {}번째 데이터 에러 발생: {}", i, individualException.getMessage(), individualException);
@@ -48,12 +53,6 @@ public class ReservationConsumer {
                 }
             }
         }
-
-
-        reservationRepository.saveAllEventsWithIgnore(events)
-                .then(performanceSeatRepository.reserveSeatBulk(events.stream().map(ReservationEvent::performanceSeatId).toList()))
-                .doOnError(e -> log.error("배치 저장중 에러 발생 {}", e.getMessage(), e))
-                .block();
 
     }
 }
