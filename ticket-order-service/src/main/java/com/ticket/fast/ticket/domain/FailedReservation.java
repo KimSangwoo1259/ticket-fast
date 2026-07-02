@@ -5,6 +5,7 @@ import com.ticket.fast.ticket.dto.event.ReservationEvent;
 import lombok.Builder;
 import lombok.Getter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
@@ -20,6 +21,8 @@ public class FailedReservation {
     private Long userId;
     private String failReason;
     private LocalDateTime failedAt;
+    @Version
+    private Long version;
 
 
     @Builder
